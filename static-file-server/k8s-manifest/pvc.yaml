@@ -10,4 +10,4 @@ spec:
   resources:
     requests:
       storage: 5Gi
-  storageClassName: custom-storage-class # Il faudrait remplacer cette valeur par celui de votre storage class.
+  storageClassName: custom-storage-class # Il faudrait remplacer cette valeur par celle de votre storage class.
