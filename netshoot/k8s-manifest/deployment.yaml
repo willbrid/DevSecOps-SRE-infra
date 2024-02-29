@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netshoot
+  labels:
+    app: netshoot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: netshoot
+  template:
+    metadata:
+      labels:
+        app: netshoot
+    spec:
+      containers:
+      - name: netshoot
+        image: nicolaka/netshoot
+        command: ['sh', '-c', 'while true; do sleep 5; done']
+        resources:
+          requests:
+            cpu: "20m"
+            memory: "50Mi"
+          limits:
+            cpu: "50m"
+            memory: "100Mi"
