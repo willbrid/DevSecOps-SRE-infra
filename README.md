@@ -26,7 +26,7 @@ Voici quelques-uns des outils couverts par ce référentiel :
 - SonarQube
 - Minio
 - Keycloak
-et plus encore...
+- et plus encore...
 
 ### Utilisation
 
