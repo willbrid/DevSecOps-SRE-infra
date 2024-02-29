@@ -1,0 +1,13 @@
+version: '3.6'
+
+services:
+  staticfileserver:
+    image: halverneus/static-file-server:v1.8.10
+    restart: always
+    ports:
+    - '8080:8080'
+    volumes:
+    - staticfileserver:/web
+
+volumes:
+  staticfileserver:
