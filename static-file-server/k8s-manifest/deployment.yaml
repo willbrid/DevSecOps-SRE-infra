@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: static-file-server
+  labels:
+    app: static-file-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: static-file-server
+  template:
+    metadata:
+      labels:
+        app: static-file-server
+    spec:
+      volumes:
+      - name: static-file-server
+        persistentVolumeClaim:
+          claimName: static-file-server
+      containers:
+        - name: static-file-server
+          image: 'halverneus/static-file-server:v1.8.10'
+          ports:
+          - name: http
+            containerPort: 8080
+            protocol: TCP
+          resources:
+            limits:
+              cpu: '300m'
+              memory: 500Mi
+            requests:
+              cpu: '50m'
+              memory: 100Mi
+          volumeMounts:
+          - name: static-file-server
+            mountPath: /web
