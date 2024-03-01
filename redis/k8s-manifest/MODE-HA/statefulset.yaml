@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-store
+  labels:
+    app: redis-store
+spec:
+  serviceName: redis-store-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: redis-store
+  template:
+    metadata:
+      labels:
+        app: redis-store
+    spec:
+      initContainers:
+      - name: config-internal
+        image: redis:7.0.10-alpine
+        command: [ "sh", "-c" ]
+        args:
+          - |
+            cp /tmp/redis/redis.conf /etc/redis/redis.conf
+            
+            echo "finding master..."
+            MASTER_FDQN=`hostname  -f | sed -e 's/redis-store-[0-9]\./redis-store-0./'`
+            if [ "$(redis-cli -h sentinel -p 5000 ping)" != "PONG" ]; then
+              echo "master not found, defaulting to redis-store-0"
+
+              if [ "$(hostname)" = "redis-store-0" ]; then
+                echo "this is redis-store-0, not updating config..."
+              else
+                echo "updating redis.conf..."
+                echo "replicaof $MASTER_FDQN 6379" >> /etc/redis/redis.conf
+              fi
+            else
+              echo "sentinel found, finding master"
+              MASTER="$(redis-cli -h sentinel -p 5000 sentinel get-master-addr-by-name mymaster | grep -E '(^redis-store-\d{1,})|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})')"
+              echo "master found : $MASTER, updating redis.conf"
+              echo "replicaof $MASTER 6379" >> /etc/redis/redis.conf
+            fi
+        volumeMounts:
+        - name: redis-store-config
+          mountPath: /etc/redis/
+        - name: config-internal
+          mountPath: /tmp/redis/
+      containers:
+      - name: redis-store
+        image: redis:7.0.10-alpine
+        command: ["redis-server"]
+        args: ["/etc/redis/redis.conf"]
+        ports:
+        - containerPort: 6379
+          protocol: TCP
+          name: redis-store
+        volumeMounts:
+        - name: redis-store-data
+          mountPath: /data
+        - name: redis-store-config
+          mountPath: /etc/redis/
+      volumes:
+      - name: redis-store-config
+        emptyDir: {}
+      - name: config-internal
+        configMap:
+          name: redis-store
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-store-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "custom-storage-class" # Il faudrait remplacer cette valeur par celle de votre classe de stockage
+      resources:
+        requests:
+          storage: 20Gi
