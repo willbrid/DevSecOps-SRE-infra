@@ -1,0 +1,27 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: mongodb-client
+  labels:
+    app: mongodb-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb-client
+  template:
+    metadata:
+      labels:
+        app: mongodb-client
+    spec:
+      containers:
+        - name: mongodb-client
+          image: 'rtsp/mongosh:2.1.5'
+          resources:
+            limits:
+              cpu: '100m'
+              memory: 200Mi
+            requests:
+              cpu: '50m'
+              memory: 100Mi
+          imagePullPolicy: IfNotPresent
