@@ -40,6 +40,13 @@ spec:
             secretKeyRef:
               name: mongodb
               key: database
+        resources:
+          limits:
+            cpu: '500m'
+            memory: 1Gi
+          requests:
+            cpu: '50m'
+            memory: 100Mi
         volumeMounts:
         - name: mongodb
           mountPath: /data/db
