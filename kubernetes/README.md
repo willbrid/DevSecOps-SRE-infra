@@ -64,7 +64,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     srv.vm.network :private_network, ip: "192.168.56.202"
   end
 
-  # Worker3
+  # External-control
   config.vm.define "external-control" do |srv|
     srv.vm.hostname = "external-control"
     srv.vm.network :private_network, ip: "192.168.56.203"
