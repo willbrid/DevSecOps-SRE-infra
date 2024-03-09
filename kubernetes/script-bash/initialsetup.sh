@@ -172,4 +172,14 @@ fi
 systemctl enable --now kubelet
 
 
+echo -e "\n----Configuration de cri-tools pour sa connexion à containerd----\n"
+
+cat <<EOF | tee /etc/crictl.yaml
+runtime-endpoint: unix:///var/run/containerd/containerd.sock
+image-endpoint: unix:///var/run/containerd/containerd.sock
+timeout: 10
+debug: true
+EOF
+
+
 echo -e "\n----Initialisation complète----\n"
