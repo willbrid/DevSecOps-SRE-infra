@@ -46,7 +46,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Master
   config.vm.define "control-node" do |srv|
     srv.vm.hostname = "control-node"
-    srv.vm.network :private_network, ip: "192.168.56.87"
+    srv.vm.network :private_network, ip: "192.168.56.200"
     srv.vm.provider :virtualbox do |v|
         v.memory = 2048
     end
@@ -55,19 +55,19 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Worker1
   config.vm.define "worker-node1" do |srv|
     srv.vm.hostname = "worker-node1"
-    srv.vm.network :private_network, ip: "192.168.56.88"
+    srv.vm.network :private_network, ip: "192.168.56.201"
   end
 
   # Worker2
   config.vm.define "worker-node2" do |srv|
     srv.vm.hostname = "worker-node2"
-    srv.vm.network :private_network, ip: "192.168.56.89"
+    srv.vm.network :private_network, ip: "192.168.56.202"
   end
 
   # Worker3
   config.vm.define "external-control" do |srv|
     srv.vm.hostname = "external-control"
-    srv.vm.network :private_network, ip: "192.168.56.90"
+    srv.vm.network :private_network, ip: "192.168.56.203"
   end
 end
 ```
