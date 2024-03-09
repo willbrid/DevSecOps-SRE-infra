@@ -129,7 +129,7 @@ sysctl --system
 echo -e "\n----Installation et configuration de containerd et runc----\n"
 
 if ! grep -q '/usr/local' /etc/environment; then
-    echo 'PATH="$PATH:/usr/local/bin:/usr/local/sbin"' >> /etc/environment
+    echo 'PATH=$PATH:/usr/local/bin:/usr/local/sbin' >> /etc/environment
     source /etc/environment
 fi
 
