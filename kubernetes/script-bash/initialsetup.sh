@@ -11,6 +11,7 @@ hostname=""
 hostfile=""
 k8sversion=""
 repok8sversion=""
+k8spathsetting=""
 
 # Définition de la fonction d'aide
 function help {
@@ -128,9 +129,16 @@ sysctl --system
 
 echo -e "\n----Installation et configuration de containerd et runc----\n"
 
-if ! grep -q '/usr/local' /etc/environment; then
-    echo 'PATH=$PATH:/usr/local/bin:/usr/local/sbin' >> /etc/environment
-    source /etc/environment
+k8spathsetting="/etc/profile.d/k8s_path_setting.sh"
+if [[ ":$PATH:" != *":/usr/local/bin:"* ]] && [[ ":$PATH:" != *":/usr/local/sbin:"* ]]; then
+    echo 'export PATH=$PATH:/usr/local/bin:/usr/local/sbin' > $k8spathsetting
+elif [[ ":$PATH:" != *":/usr/local/bin:"* ]]; then
+    echo 'export PATH=$PATH:/usr/local/bin' > $k8spathsetting
+elif [[ ":$PATH:" != *":/usr/local/sbin:"* ]]; then
+    echo 'export PATH=$PATH:/usr/local/sbin' > $k8spathsetting
+fi
+if [ -f "$k8spathsetting" ]; then
+    source $k8spathsetting
 fi
 
 wget -P /tmp https://github.com/containerd/containerd/releases/download/v1.7.6/containerd-1.7.6-linux-amd64.tar.gz
