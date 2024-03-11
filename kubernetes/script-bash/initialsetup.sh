@@ -129,7 +129,7 @@ sysctl --system
 
 echo -e "\n----Installation et configuration de containerd et runc----\n"
 
-k8spathsetting="/etc/profile.d/k8s_path_setting.sh"
+k8spathsetting="/etc/profile.d/usr_local_bin_path_setting.sh"
 if [[ ":$PATH:" != *":/usr/local/bin:"* ]] && [[ ":$PATH:" != *":/usr/local/sbin:"* ]]; then
     echo 'export PATH=$PATH:/usr/local/bin:/usr/local/sbin' > $k8spathsetting
 elif [[ ":$PATH:" != *":/usr/local/bin:"* ]]; then
