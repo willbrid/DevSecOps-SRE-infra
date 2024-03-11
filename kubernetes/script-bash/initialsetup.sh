@@ -1,5 +1,23 @@
 #!/bin/bash
 
+################################################################################
+# Description :
+#   Ce script Bash automatisé est conçu pour configurer un environnement de 
+#   cluster Kubernetes sur une machine Rocky linux 8. Il effectue plusieurs tâches 
+#   essentielles, notamment l'ajout d'une règle masquerade au pare-feu, la Configuration
+#   de selinux en mode permissive, la désactivation du swap, l'activation du routage, 
+#   la configuration des modules kernel (overlay et br_netfilter) pour containerd, ainsi que 
+#   l'installation des packages nécessaires pour containerd, runc kubeadm, kubelet et kubectl.
+#
+# Utilisation :
+#   sudo ./initialsetup.sh [options]
+#
+# Options :
+#   -h, --hostname     Nom d'hôte
+#   -f, --hostfile     Fichier d'hôtes
+#   -k, --k8s-version  Version de Kubernetes
+#   --help             Afficher cette aide
+
 # Vérification de l'exécution en mode root
 if [ "$EUID" -ne 0 ]; then
     echo "Ce script doit être exécuté en tant que root."
