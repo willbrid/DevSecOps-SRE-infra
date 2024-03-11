@@ -32,21 +32,21 @@ repok8sversion=""
 k8spathsetting=""
 
 # Définition de la fonction d'aide
-function help {
+function displayHelp {
     echo "Usage: $0 [options]"
     echo "Options:"
     echo "  -h, --help         Afficher cette aide"
     echo "  --hostname         Nom d'hôte à configurer"
     echo "  --hostfile         Fichier d'hôtes"
     echo "  --k8s-version      Version de Kubernetes"
-    exit 1
+    exit 0
 }
 
 # Traitement des options avec getopts
-while getopts ":h:-:" opt; do
+while getopts ":h-:" opt; do
     case ${opt} in
         h)
-          help
+          displayHelp
           ;;
         -)
             case "${OPTARG}" in
@@ -60,12 +60,12 @@ while getopts ":h:-:" opt; do
                   k8sversion="${OPTARG#*=}"
                   ;;
                 help)
-                    help
-                    ;;
+                  displayHelp
+                  ;;
                 *)
-                    echo "Option invalide: --${OPTARG}"
-                    exit 1
-                    ;;
+                  echo "Option invalide: --${OPTARG}"
+                  exit 1
+                  ;;
             esac
             ;;
         \?)
@@ -78,8 +78,8 @@ shift $((OPTIND -1))
 
 # Vérification que toutes les options obligatoires sont fournies
 if [[ -z $hostname ]] || [[ -z $hostfile ]] || [[ -z $k8sversion ]]; then
-    echo "Les options -h (--hostname), -f (--hostfile) et -k (--k8sversion) sont obligatoires."
-    help
+    echo "Les options --hostname, --hostfile et --k8s-version sont obligatoires."
+    displayHelp
 fi
 
 # Vérification de l'existence du fichier de configuration
