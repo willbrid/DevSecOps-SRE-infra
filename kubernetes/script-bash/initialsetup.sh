@@ -14,7 +14,7 @@
 #
 # Options :
 #   -h, --help         Afficher cette aide
-#   --hostname         Nom d'hôte
+#   --hostname         Nom d'hôte à configurer
 #   --hostfile         Fichier d'hôtes
 #   --k8s-version      Version de Kubernetes
 
@@ -36,7 +36,7 @@ function help {
     echo "Usage: $0 [options]"
     echo "Options:"
     echo "  -h, --help         Afficher cette aide"
-    echo "  --hostname         Nom d'hôte"
+    echo "  --hostname         Nom d'hôte à configurer"
     echo "  --hostfile         Fichier d'hôtes"
     echo "  --k8s-version      Version de Kubernetes"
     exit 1
