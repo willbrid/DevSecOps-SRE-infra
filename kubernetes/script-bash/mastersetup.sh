@@ -25,6 +25,7 @@ podnetwork="$defaultpodnetwork"
 validationpodnetwork=""
 apiserverip=""
 validationapiserverip=""
+apiserverpodrunning=false
 k8sversion=""
 
 # Définition de la fonction d'aide
@@ -35,6 +36,16 @@ function displayHelp {
     echo "  --api-server-ip    L'adresse IP sur laquelle le serveur API écoutera (Elle doit être l'adresse IP du serveur master)"
     echo "  --pod-network      Plage du réseau du cluster (valeur par défaut = $defaultpodnetwork)"
     exit 0
+}
+
+function checkApiserverPodStatus {
+    local status
+    status=$(kubectl get pod --no-headers kube-apiserver-$HOSTNAME -n kube-system -o custom-columns=CONTAINER:.status.phase)
+    if [ "$status" = "Running" ]; then
+        apiserverpodrunning=true
+    else
+        sleep 5
+    fi
 }
 
 # Traitement des options avec getopts
@@ -105,9 +116,16 @@ echo -e "\n----Initialisation du cluster sur le noeud master----\n"
 
 k8sversion=$(echo "$(kubelet --version)" | grep -oP '\d+\.\d+\.\d+')
 kubeadm init --pod-network-cidr $podnetwork --apiserver-advertise-address $apiserverip --kubernetes-version $k8sversion
+mkdir -p /root/.kube
+cp -i /etc/kubernetes/admin.conf /root/.kube/config
+chown $(id -u):$(id -g) /root/.kube/config
 
 
 echo -e "\n----Installation du module complémentaire réseau Calico----\n"
+
+while ! $apiserverpodrunning; do
+    checkApiserverPodStatus
+done
 
 kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 
