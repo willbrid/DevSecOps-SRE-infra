@@ -13,10 +13,10 @@
 #   sudo ./initialsetup.sh [options]
 #
 # Options :
-#   -h, --hostname     Nom d'hôte
-#   -f, --hostfile     Fichier d'hôtes
-#   -k, --k8s-version  Version de Kubernetes
-#   --help             Afficher cette aide
+#   -h, --help         Afficher cette aide
+#   --hostname         Nom d'hôte
+#   --hostfile         Fichier d'hôtes
+#   --k8s-version      Version de Kubernetes
 
 # Vérification de l'exécution en mode root
 if [ "$EUID" -ne 0 ]; then
@@ -35,24 +35,18 @@ k8spathsetting=""
 function help {
     echo "Usage: $0 [options]"
     echo "Options:"
-    echo "  -h, --hostname     Nom d'hôte"
-    echo "  -f, --hostfile     Fichier d'hôtes"
-    echo "  -k, --k8s-version  Version de Kubernetes"
-    echo "  --help              Afficher cette aide"
+    echo "  -h, --help         Afficher cette aide"
+    echo "  --hostname         Nom d'hôte"
+    echo "  --hostfile         Fichier d'hôtes"
+    echo "  --k8s-version      Version de Kubernetes"
     exit 1
 }
 
 # Traitement des options avec getopts
-while getopts ":h:f:k:-:" opt; do
+while getopts ":h:-:" opt; do
     case ${opt} in
         h)
-          hostname="$OPTARG"
-          ;;
-        f)
-          hostfile="$OPTARG"
-          ;;
-        k)
-          k8sversion="$OPTARG"
+          help
           ;;
         -)
             case "${OPTARG}" in
