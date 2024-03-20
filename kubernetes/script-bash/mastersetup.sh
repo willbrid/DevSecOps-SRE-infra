@@ -116,6 +116,10 @@ echo -e "\n----Initialisation du cluster sur le noeud master----\n"
 
 k8sVersion=$(echo "$(kubelet --version)" | grep -oP '\d+\.\d+\.\d+')
 kubeadm init --pod-network-cidr $podnetwork --apiserver-advertise-address $apiServerIP --kubernetes-version $k8sVersion
+if [ $? -ne 0 ]; then
+    echo "Echec d'initialisation du cluster"
+    exit 1
+fi
 mkdir -p /root/.kube
 cp -i /etc/kubernetes/admin.conf /root/.kube/config
 chown $(id -u):$(id -g) /root/.kube/config
@@ -130,4 +134,9 @@ done
 kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 
 
-echo -e "\n----Initialisation complète du cluster k8s----\n"
+echo -e "\n----Création du script d'ajout des noeuds workers au cluster----\n"
+
+kubeadm token create --print-join-command > /home/vagrant/shared/join-command.sh
+
+
+echo -e "\n----Configuration du noeud master avec succès----\n"
