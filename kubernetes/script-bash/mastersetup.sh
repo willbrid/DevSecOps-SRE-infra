@@ -3,7 +3,7 @@
 ################################################################################
 # Description :
 #   Ce script Bash automatisé est conçu pour initialiser un cluster Kubernetes 
-#   sur une machine Rocky linux 8.
+#   sur une machine vagrant Rocky linux 8.
 #
 # Utilisation :
 #   sudo ./mastersetup.sh [options]
@@ -20,13 +20,13 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # Initialisation des variables
-defaultpodnetwork="172.16.0.0/16"
-podnetwork="$defaultpodnetwork"
-validationpodnetwork=""
-apiserverip=""
-validationapiserverip=""
-apiserverpodrunning=false
-k8sversion=""
+defaultPodnetwork="172.16.0.0/16"
+podnetwork="$defaultPodnetwork"
+validationPodnetwork=""
+apiServerIP=""
+validationApiServerIP=""
+apiServerPodRunning=false
+k8sVersion=""
 
 # Définition de la fonction d'aide
 function displayHelp {
@@ -34,7 +34,7 @@ function displayHelp {
     echo "Options:"
     echo "  -h, --help         Afficher cette aide"
     echo "  --api-server-ip    L'adresse IP sur laquelle le serveur API écoutera (Elle doit être l'adresse IP du serveur master)"
-    echo "  --pod-network      Plage du réseau du cluster (valeur par défaut = $defaultpodnetwork)"
+    echo "  --pod-network      Plage du réseau du cluster (valeur par défaut = $defaultPodnetwork)"
     exit 0
 }
 
@@ -42,7 +42,7 @@ function checkApiserverPodStatus {
     local status
     status=$(kubectl get pod --no-headers kube-apiserver-$HOSTNAME -n kube-system -o custom-columns=CONTAINER:.status.phase)
     if [ "$status" = "Running" ]; then
-        apiserverpodrunning=true
+        apiServerPodRunning=true
     else
         sleep 5
     fi
@@ -57,7 +57,7 @@ while getopts ":h-:" opt; do
         -)
             case "${OPTARG}" in
                 api-server-ip=*)
-                  apiserverip="${OPTARG#*=}"
+                  apiServerIP="${OPTARG#*=}"
                   ;;
                 pod-network=*)
                   podnetwork="${OPTARG#*=}"
@@ -80,22 +80,22 @@ done
 shift $((OPTIND -1))
 
 # Vérification de la présence de l'option --api-server-ip
-if [[ -z $apiserverip ]]; then
+if [[ -z $apiServerIP ]]; then
     echo "L'option --api-server-ip est obligatoire."
     displayHelp
 fi
 
 # Vérification du format de l'adresse IP du serveur API
-validationapiserverip="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
-if ! [[ $apiserverip =~ $validationapiserverip ]]; then
-    echo "Erreur: $apiserverip n'est pas sous le format d'adresse ipv4 (ex: 192.168.56.1)."
+validationApiServerIP="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
+if ! [[ $apiServerIP =~ $validationApiServerIP ]]; then
+    echo "Erreur: $apiServerIP n'est pas sous le format d'adresse ipv4 (ex: 192.168.56.1)."
     exit 1
 fi
 
 # Vérification du format de la plage du réseau du cluster
-validationpodnetwork="^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$"
-if ! [[ $podnetwork =~ $validationpodnetwork ]]; then
-    echo "Erreur: $podnetwork n'est pas sous le format cidr (ex: $defaultpodnetwork)."
+validationPodnetwork="^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+if ! [[ $podnetwork =~ $validationPodnetwork ]]; then
+    echo "Erreur: $podnetwork n'est pas sous le format cidr (ex: $defaultPodnetwork)."
     exit 1
 fi
 
@@ -114,8 +114,8 @@ firewall-cmd --reload
 
 echo -e "\n----Initialisation du cluster sur le noeud master----\n"
 
-k8sversion=$(echo "$(kubelet --version)" | grep -oP '\d+\.\d+\.\d+')
-kubeadm init --pod-network-cidr $podnetwork --apiserver-advertise-address $apiserverip --kubernetes-version $k8sversion
+k8sVersion=$(echo "$(kubelet --version)" | grep -oP '\d+\.\d+\.\d+')
+kubeadm init --pod-network-cidr $podnetwork --apiserver-advertise-address $apiServerIP --kubernetes-version $k8sVersion
 mkdir -p /root/.kube
 cp -i /etc/kubernetes/admin.conf /root/.kube/config
 chown $(id -u):$(id -g) /root/.kube/config
@@ -123,7 +123,7 @@ chown $(id -u):$(id -g) /root/.kube/config
 
 echo -e "\n----Installation du module complémentaire réseau Calico----\n"
 
-while ! $apiserverpodrunning; do
+while ! $apiServerPodRunning; do
     checkApiserverPodStatus
 done
 
