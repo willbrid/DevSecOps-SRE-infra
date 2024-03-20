@@ -42,6 +42,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     v.cpus = 2
     v.linked_clone = true
   end
+  config.trigger.before :up do |trigger|
+    trigger.info = "Creating the shared directory at the root directory of Vagrantfile"
+    trigger.run = {inline: "bash -c 'mkdir -p $(pwd)/shared'"}
+  end
+  config.vm.synced_folder "shared/", "/home/vagrant/shared"
 
   # Master
   config.vm.define "control-node" do |srv|
