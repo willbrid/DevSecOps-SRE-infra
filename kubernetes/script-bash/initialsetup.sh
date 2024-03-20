@@ -13,10 +13,11 @@
 #   sudo ./initialsetup.sh [options]
 #
 # Options :
-#   -h, --help         Afficher cette aide
-#   --hostname         Nom d'hôte à configurer
-#   --hostfile         Fichier d'hôtes
-#   --k8s-version      Version de Kubernetes
+#   -h, --help              Afficher cette aide
+#   --hostname              Nom d'hôte à configurer
+#   --hostfile              Fichier d'hôtes
+#   --k8s-version           Version de Kubernetes
+#   --containerd-version    Version de containerd (Par défaut: 1.7.14)"
 
 # Vérification de l'exécution en mode root
 if [ "$EUID" -ne 0 ]; then
@@ -27,18 +28,20 @@ fi
 # Initialisation des variables
 hostname=""
 hostfile=""
-k8sversion=""
-repok8sversion=""
-k8spathsetting=""
+k8sVersion=""
+repok8sVersion=""
+k8sPathSetting=""
+containerdVersion="1.7.14"
 
 # Définition de la fonction d'aide
 function displayHelp {
     echo "Usage: $0 [options]"
     echo "Options:"
-    echo "  -h, --help         Afficher cette aide"
-    echo "  --hostname         Nom d'hôte à configurer"
-    echo "  --hostfile         Fichier d'hôtes"
-    echo "  --k8s-version      Version de Kubernetes"
+    echo "  -h, --help              Afficher cette aide"
+    echo "  --hostname              Nom d'hôte à configurer"
+    echo "  --hostfile              Fichier d'hôtes"
+    echo "  --k8s-version           Version de Kubernetes"
+    echo "  --containerd-version    Version de containerd (Par défaut: 1.7.14)"
     exit 0
 }
 
@@ -57,7 +60,10 @@ while getopts ":h-:" opt; do
                   hostfile="${OPTARG#*=}"
                   ;;
                 k8s-version=*)
-                  k8sversion="${OPTARG#*=}"
+                  k8sVersion="${OPTARG#*=}"
+                  ;;
+                containerd-version=*)
+                  containerdVersion="${OPTARG#*=}"
                   ;;
                 help)
                   displayHelp
@@ -76,8 +82,8 @@ while getopts ":h-:" opt; do
 done
 shift $((OPTIND -1))
 
-# Vérification que toutes les options obligatoires sont fournies
-if [[ -z $hostname ]] || [[ -z $hostfile ]] || [[ -z $k8sversion ]]; then
+# Vérification de la présence de toutes les options obligatoires
+if [[ -z $hostname ]] || [[ -z $hostfile ]] || [[ -z $k8sVersion ]]; then
     echo "Les options --hostname, --hostfile et --k8s-version sont obligatoires."
     displayHelp
 fi
@@ -89,9 +95,9 @@ if [ ! -f "$hostfile" ]; then
 fi
 
 # Vérification du format de la version de k8s
-validationk8sversion="^[0-9]+\.[0-9]+\.[0-9]+$"
-if ! [[ $k8sversion =~ $validationk8sversion ]]; then
-    echo "Erreur: $k8sversion n'est pas sous le format x.y.z où x, y et z sont des nombres."
+validationk8sVersion="^[0-9]+\.[0-9]+\.[0-9]+$"
+if ! [[ $k8sVersion =~ $validationk8sVersion ]]; then
+    echo "Erreur: $k8sVersion n'est pas sous le format x.y.z où x, y et z sont des nombres."
     exit 1
 fi
 
@@ -147,20 +153,20 @@ sysctl --system
 
 echo -e "\n----Installation et configuration de containerd----\n"
 
-k8spathsetting="/etc/profile.d/usr_local_bin_path_setting.sh"
+k8sPathSetting="/etc/profile.d/usr_local_bin_path_setting.sh"
 if [[ ":$PATH:" != *":/usr/local/bin:"* ]] && [[ ":$PATH:" != *":/usr/local/sbin:"* ]]; then
-    echo 'export PATH=$PATH:/usr/local/bin:/usr/local/sbin' > $k8spathsetting
+    echo 'export PATH=$PATH:/usr/local/bin:/usr/local/sbin' > $k8sPathSetting
 elif [[ ":$PATH:" != *":/usr/local/bin:"* ]]; then
-    echo 'export PATH=$PATH:/usr/local/bin' > $k8spathsetting
+    echo 'export PATH=$PATH:/usr/local/bin' > $k8sPathSetting
 elif [[ ":$PATH:" != *":/usr/local/sbin:"* ]]; then
-    echo 'export PATH=$PATH:/usr/local/sbin' > $k8spathsetting
+    echo 'export PATH=$PATH:/usr/local/sbin' > $k8sPathSetting
 fi
-if [ -f "$k8spathsetting" ]; then
-    source $k8spathsetting
+if [ -f "$k8sPathSetting" ]; then
+    source $k8sPathSetting
 fi
 
-wget -P /tmp https://github.com/containerd/containerd/releases/download/v1.7.6/containerd-1.7.6-linux-amd64.tar.gz
-tar Czxvf /usr/local /tmp/containerd-1.7.6-linux-amd64.tar.gz
+wget -P /tmp https://github.com/containerd/containerd/releases/download/v$containerdVersion/containerd-$containerdVersion-linux-amd64.tar.gz
+tar Czxvf /usr/local /tmp/containerd-$containerdVersion-linux-amd64.tar.gz
 wget -P /tmp https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
 mv /tmp/containerd.service /usr/lib/systemd/system/
 chown root:root /usr/lib/systemd/system/containerd.service
@@ -176,18 +182,18 @@ systemctl restart containerd
 
 echo -e "\n----Installation de kubeadm, kubelet et kubectl----\n"
 
-repok8sversion="${k8sversion%.*}"
+repok8sVersion="${k8sVersion%.*}"
 cat <<EOF | tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
-baseurl=https://pkgs.k8s.io/core:/stable:/v$repok8sversion/rpm/
+baseurl=https://pkgs.k8s.io/core:/stable:/v$repok8sVersion/rpm/
 enabled=1
 gpgcheck=1
-gpgkey=https://pkgs.k8s.io/core:/stable:/v$repok8sversion/rpm/repodata/repomd.xml.key
+gpgkey=https://pkgs.k8s.io/core:/stable:/v$repok8sVersion/rpm/repodata/repomd.xml.key
 exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
 EOF
 
-dnf install -y kubelet-$k8sversion kubeadm-$k8sversion kubectl-$k8sversion --disableexcludes=kubernetes
+dnf install -y kubelet-$k8sVersion kubeadm-$k8sVersion kubectl-$k8sVersion --disableexcludes=kubernetes
 if [ $? -ne 0 ]; then
     echo "Echec d'installation des packages kubeadm, kubelet et kubectl"
     exit 1
