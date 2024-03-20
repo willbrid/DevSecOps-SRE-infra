@@ -77,6 +77,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 end
 ```
 
+NB: Notre bac à sable est conçu depuis une machine hôte **ubuntu 20.04**.
+
 ### Référence
 
 - [Kubernetes Documentation](https://kubernetes.io/docs/home/)
