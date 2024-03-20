@@ -145,7 +145,7 @@ EOF
 sysctl --system
 
 
-echo -e "\n----Installation et configuration de containerd et runc----\n"
+echo -e "\n----Installation et configuration de containerd----\n"
 
 k8spathsetting="/etc/profile.d/usr_local_bin_path_setting.sh"
 if [[ ":$PATH:" != *":/usr/local/bin:"* ]] && [[ ":$PATH:" != *":/usr/local/sbin:"* ]]; then
@@ -167,9 +167,6 @@ chown root:root /usr/lib/systemd/system/containerd.service
 restorecon /usr/lib/systemd/system/containerd.service
 systemctl daemon-reload
 systemctl enable --now containerd
-
-wget -P /tmp https://github.com/opencontainers/runc/releases/download/v1.1.9/runc.amd64
-install -m 755 /tmp/runc.amd64 /usr/local/sbin/runc
 
 mkdir -p /etc/containerd
 containerd config default | tee /etc/containerd/config.toml
