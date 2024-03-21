@@ -42,11 +42,19 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     v.cpus = 2
     v.linked_clone = true
   end
+  
   config.trigger.before :up do |trigger|
     trigger.info = "Creating the shared directory at the root directory of Vagrantfile"
     trigger.run = {inline: "bash -c 'mkdir -p $(pwd)/shared'"}
   end
   config.vm.synced_folder "shared/", "/home/vagrant/shared"
+
+  config.vm.provision "shell", inline: <<-SHELL, privileged: true
+    if ! command -v git &> /dev/null; then
+        echo "Git is not installed, installation in progress..."
+        dnf install -y git
+    fi
+  SHELL
 
   # Master
   config.vm.define "control-node" do |srv|
@@ -78,6 +86,61 @@ end
 ```
 
 NB: Notre bac à sable est conçu depuis une machine hôte **ubuntu 20.04**.
+
+### Installation de k8s version 1.27
+
+- Pour tous les 3 noeuds
+
+
+```
+git clone https://github.com/willbrid/DevSecOps-SRE-infra.git
+```
+
+```
+cd DevSecOps-SRE-infra/kubernetes/script-bash
+```
+
+```
+chmod +x initialsetup.sh
+```
+
+--- Noeud master
+
+```
+sudo ./initialsetup.sh --hostname=control --hostfile=hosts --k8s-version=1.27.0
+```
+
+--- Noeud worker1
+
+```
+sudo ./initialsetup.sh --hostname=worker1 --hostfile=hosts --k8s-version=1.27.0
+```
+
+--- Noeud worker2
+
+```
+sudo ./initialsetup.sh --hostname=worker2 --hostfile=hosts --k8s-version=1.27.0
+```
+
+- Sur le noeud master
+
+```
+chmod +x mastersetup.sh
+```
+
+```
+sudo ./mastersetup.sh --api-server-ip=192.168.56.200
+```
+
+- Sur tous les noeuds workers
+
+```
+chmod +x workersetup.sh
+```
+
+```
+sudo ./workersetup.sh
+```
 
 ### Référence
 
