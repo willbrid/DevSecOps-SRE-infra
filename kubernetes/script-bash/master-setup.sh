@@ -37,7 +37,6 @@ displayHelp() {
     echo "  -h, --help         Afficher cette aide"
     echo "  --api-server-ip    L'adresse IP sur laquelle le serveur API écoutera (Elle doit être l'adresse IP du serveur master)"
     echo "  --pod-network      Plage du réseau du cluster (valeur par défaut = $defaultPodnetwork)"
-    exit 0
 }
 
 checkApiserverPodStatus() {
@@ -56,6 +55,7 @@ verifyOptions() {
     if [[ -z $apiServerIP ]]; then
         echo "L'option --api-server-ip est obligatoire."
         displayHelp
+        exit 1
     fi
 
     validationApiServerIP="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
@@ -129,6 +129,7 @@ while getopts ":h-:" opt; do
     case ${opt} in
         h)
           displayHelp
+          exit 0
           ;;
         -)
             case "${OPTARG}" in
@@ -140,6 +141,7 @@ while getopts ":h-:" opt; do
                   ;;
                 help)
                   displayHelp
+                  exit 0
                   ;;
                 *)
                   echo "Option invalide: --${OPTARG}"
