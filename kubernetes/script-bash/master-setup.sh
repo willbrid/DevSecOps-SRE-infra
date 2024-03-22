@@ -13,12 +13,6 @@
 #   --api-server-ip    L'adresse IP sur laquelle le serveur API écoutera (Elle doit être l'adresse IP du serveur master)
 #   --pod-network      Plage du réseau du cluster (valeur par défaut = 172.16.0.0/16)
 
-# Vérification de l'exécution en mode root
-if [ "$EUID" -ne 0 ]; then
-    echo "Ce script doit être exécuté en tant que root."
-    exit 1
-fi
-
 # Initialisation des variables
 defaultPodnetwork="172.16.0.0/16"
 podnetwork="$defaultPodnetwork"
@@ -28,8 +22,16 @@ validationApiServerIP=""
 apiServerPodRunning=false
 k8sVersion=""
 
+# Vérification de l'exécution en mode root
+checkIfRoot() {
+    if [ "$EUID" -ne 0 ]; then
+        echo "Ce script doit être exécuté en tant que root."
+        exit 1
+    fi
+}
+
 # Définition de la fonction d'aide
-function displayHelp {
+displayHelp() {
     echo "Usage: $0 [options]"
     echo "Options:"
     echo "  -h, --help         Afficher cette aide"
@@ -38,7 +40,7 @@ function displayHelp {
     exit 0
 }
 
-function checkApiserverPodStatus {
+checkApiserverPodStatus() {
     local status
     local hostname=$(cat /etc/hostname)
     status=$(kubectl get pod --no-headers kube-apiserver-$hostname -n kube-system -o custom-columns=CONTAINER:.status.phase)
@@ -48,6 +50,79 @@ function checkApiserverPodStatus {
         sleep 5
     fi
 }
+
+# Vérification des options entrées
+verifyOptions() {
+    if [[ -z $apiServerIP ]]; then
+        echo "L'option --api-server-ip est obligatoire."
+        displayHelp
+    fi
+
+    validationApiServerIP="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
+    if ! [[ $apiServerIP =~ $validationApiServerIP ]]; then
+        echo "Erreur: $apiServerIP n'est pas sous le format d'adresse ipv4 (ex: 192.168.56.1)."
+        exit 1
+    fi
+
+    validationPodnetwork="^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+    if ! [[ $podnetwork =~ $validationPodnetwork ]]; then
+        echo "Erreur: $podnetwork n'est pas sous le format cidr (ex: $defaultPodnetwork)."
+        exit 1
+    fi
+}
+
+# Vérification de la présence des packages kubeadm, kubelet, kubectl et containerd
+checkDependency() {
+    if ! command -v kubeadm &> /dev/null || ! command -v kubelet &> /dev/null || ! command -v kubectl || ! command -v containerd &> /dev/null; then
+        echo "Veuillez installer les packages kubeadm, kubelet, kubectl et containerd pour exécuter ce script. Veuillez utiliser le script common-setup.sh"
+        exit 1
+    fi
+}
+
+# Initialisation du cluster kubernetes
+initCluster() {
+    echo -e "\nInitialisation du cluster kubernetes en cours...\n"
+
+    firewall-cmd --permanent --add-port={6443,2379-2380,10250,10251,10252}/tcp
+    firewall-cmd --reload
+
+    k8sVersion=$(echo "$(kubelet --version)" | grep -oP '\d+\.\d+\.\d+')
+    kubeadm init --pod-network-cidr $podnetwork --apiserver-advertise-address $apiServerIP --kubernetes-version $k8sVersion
+   
+    mkdir -p /root/.kube
+    cp -i /etc/kubernetes/admin.conf /root/.kube/config
+    chown $(id -u):$(id -g) /root/.kube/config
+
+    while ! $apiServerPodRunning; do
+        checkApiserverPodStatus
+    done
+
+    kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+
+    kubeadm token create --print-join-command > /home/vagrant/shared/join-command.sh
+
+    echo -e "\nInitialisation du cluster kubernetes : OK\n"
+}
+
+# failTrap est exécuté si une erreur se produit.
+failTrap() {
+    result=$?
+    
+    if [ "$result" != "0" ]; then
+        echo -e "\tEchec de configuration du noeud master du cluster kubernetes."
+    fi
+    
+    exit $result
+}
+
+
+# Execution
+
+# Arrêter l'exécution en cas d'erreur
+trap "failTrap" EXIT
+set -e
+
+checkIfRoot
 
 # Traitement des options avec getopts
 while getopts ":h-:" opt; do
@@ -80,64 +155,8 @@ while getopts ":h-:" opt; do
 done
 shift $((OPTIND -1))
 
-# Vérification de la présence de l'option --api-server-ip
-if [[ -z $apiServerIP ]]; then
-    echo "L'option --api-server-ip est obligatoire."
-    displayHelp
-fi
+verifyOptions
+checkDependency
+initCluster
 
-# Vérification du format de l'adresse IP du serveur API
-validationApiServerIP="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
-if ! [[ $apiServerIP =~ $validationApiServerIP ]]; then
-    echo "Erreur: $apiServerIP n'est pas sous le format d'adresse ipv4 (ex: 192.168.56.1)."
-    exit 1
-fi
-
-# Vérification du format de la plage du réseau du cluster
-validationPodnetwork="^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$"
-if ! [[ $podnetwork =~ $validationPodnetwork ]]; then
-    echo "Erreur: $podnetwork n'est pas sous le format cidr (ex: $defaultPodnetwork)."
-    exit 1
-fi
-
-# Vérification de la présence des packages kubeadm, kubelet et kubectl
-if ! command -v kubeadm &> /dev/null || ! command -v kubelet &> /dev/null || ! command -v kubectl &> /dev/null; then
-    echo "Veuillez installer les packages kubeadm, kubelet et kubectl pour exécuter ce script. Veuillez utiliser le script initialsetup.sh"
-    exit 1
-fi
-
-
-echo -e "\n----Autorisation des ports par défaut des composants du noeud master----\n"
-
-firewall-cmd --permanent --add-port={6443,2379-2380,10250,10251,10252}/tcp
-firewall-cmd --reload
-
-
-echo -e "\n----Initialisation du cluster sur le noeud master----\n"
-
-k8sVersion=$(echo "$(kubelet --version)" | grep -oP '\d+\.\d+\.\d+')
-kubeadm init --pod-network-cidr $podnetwork --apiserver-advertise-address $apiServerIP --kubernetes-version $k8sVersion
-if [ $? -ne 0 ]; then
-    echo "Echec d'initialisation du cluster"
-    exit 1
-fi
-mkdir -p /root/.kube
-cp -i /etc/kubernetes/admin.conf /root/.kube/config
-chown $(id -u):$(id -g) /root/.kube/config
-
-
-echo -e "\n----Installation du module complémentaire réseau Calico----\n"
-
-while ! $apiServerPodRunning; do
-    checkApiserverPodStatus
-done
-
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
-
-
-echo -e "\n----Création du script d'ajout des noeuds workers au cluster----\n"
-
-kubeadm token create --print-join-command > /home/vagrant/shared/join-command.sh
-
-
-echo -e "\n----Configuration du noeud master avec succès----\n"
+echo -e "\nConfiguration du noeud master : OK\n"
