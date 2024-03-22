@@ -6,7 +6,7 @@
 #   sur une machine vagrant Rocky linux 8.
 #
 # Utilisation :
-#   sudo ./mastersetup.sh [options]
+#   sudo ./master-setup.sh [options]
 #
 # Options :
 #   -h, --help         Afficher cette aide

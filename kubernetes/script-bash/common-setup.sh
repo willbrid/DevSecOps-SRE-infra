@@ -10,7 +10,7 @@
 #   l'installation des packages nécessaires pour containerd, runc kubeadm, kubelet et kubectl.
 #
 # Utilisation :
-#   sudo ./initialsetup.sh [options]
+#   sudo ./common-setup.sh [options]
 #
 # Options :
 #   -h, --help              Afficher cette aide
@@ -217,4 +217,4 @@ debug: true
 EOF
 
 
-echo -e "\n----Initialisation complète----\n"
+echo -e "\n----Configuration commune à tous les noeuds avec succès----\n"

@@ -6,7 +6,7 @@
 #   cluster Kubernetes sur une machine vagrant Rocky linux 8.
 #
 # Utilisation :
-#   sudo ./workersetup.sh
+#   sudo ./worker-setup.sh
 
 # Vérification de l'exécution en mode root
 if [ "$EUID" -ne 0 ]; then
