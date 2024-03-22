@@ -177,6 +177,15 @@ sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config
 systemctl restart containerd
 
 
+echo -e "\n----Installation du client NFS via les packages nfs-utils, nfs4-acl-tools----\n"
+
+dnf install -y nfs-utils nfs4-acl-tools
+if [ $? -ne 0 ]; then
+    echo "Echec d'installation des packages nfs-utils, nfs4-acl-tools"
+    exit 1
+fi
+
+
 echo -e "\n----Installation de kubeadm, kubelet et kubectl----\n"
 
 repok8sVersion="${k8sVersion%.*}"
