@@ -106,6 +106,7 @@ echo -e "\n----Configuration du hostname et du fichier /etc/hosts----\n"
 
 # Configuration du hostname du serveur
 hostnamectl set-hostname $hostname
+HOSTNAME="$hostname"
 
 while read -r ip host; do
     echo -e "$ip\t$host" >> /etc/hosts
