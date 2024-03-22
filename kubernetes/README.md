@@ -81,6 +81,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define "external-control" do |srv|
     srv.vm.hostname = "external-control"
     srv.vm.network :private_network, ip: "192.168.56.203"
+    srv.vm.disk :disk, name: "storage", size: "100GB"
   end
 end
 ```
@@ -99,45 +100,77 @@ cd DevSecOps-SRE-infra/kubernetes/script-bash
 ```
 
 ```
-chmod +x initialsetup.sh
+chmod +x common-setup.sh
 ```
 
 --- Noeud master
 
 ```
-sudo ./initialsetup.sh --hostname=control --hostfile=hosts --k8s-version=1.27.0
+sudo ./common-setup.sh --hostname=control --hostfile=hosts --k8s-version=1.27.0
 ```
 
 --- Noeud worker1
 
 ```
-sudo ./initialsetup.sh --hostname=worker1 --hostfile=hosts --k8s-version=1.27.0
+sudo ./common-setup.sh --hostname=worker1 --hostfile=hosts --k8s-version=1.27.0
 ```
 
 --- Noeud worker2
 
 ```
-sudo ./initialsetup.sh --hostname=worker2 --hostfile=hosts --k8s-version=1.27.0
+sudo ./common-setup.sh --hostname=worker2 --hostfile=hosts --k8s-version=1.27.0
 ```
 
 - Sur le noeud master
 
 ```
-chmod +x mastersetup.sh
+chmod +x master-setup.sh
 ```
 
 ```
-sudo ./mastersetup.sh --api-server-ip=192.168.56.200
+sudo ./master-setup.sh --api-server-ip=192.168.56.200
 ```
 
 - Sur tous les noeuds workers
 
 ```
-chmod +x workersetup.sh
+chmod +x worker-setup.sh
 ```
 
 ```
-sudo ./workersetup.sh
+sudo ./worker-setup.sh
+```
+
+### Installation du service NFS sur le serveur external-control
+
+```
+git clone https://github.com/willbrid/DevSecOps-SRE-infra.git
+```
+
+```
+cd DevSecOps-SRE-infra/kubernetes/script-bash
+```
+
+```
+sudo ./nfs-server-setup.sh --nfs-network=192.168.56.0/24 --device-name=sdb --device-num=1 --device-size=50
+```
+
+### Installation du provisionneur de volume persistant dans notre cluster depuis notre noeud master
+
+```
+sudo su
+```
+
+```
+helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
+```
+
+```
+helm install nfs-subdir-external-provisioner \
+nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
+--set nfs.server=192.168.56.203 \
+--set nfs.path=/data/nfsshared \
+--set storageClass.onDelete=true
 ```
 
 ### Référence
