@@ -40,7 +40,8 @@ function displayHelp {
 
 function checkApiserverPodStatus {
     local status
-    status=$(kubectl get pod --no-headers kube-apiserver-$HOSTNAME -n kube-system -o custom-columns=CONTAINER:.status.phase)
+    local hostname=$(cat /etc/hostname)
+    status=$(kubectl get pod --no-headers kube-apiserver-$hostname -n kube-system -o custom-columns=CONTAINER:.status.phase)
     if [ "$status" = "Running" ]; then
         apiServerPodRunning=true
     else
