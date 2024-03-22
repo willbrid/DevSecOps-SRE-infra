@@ -19,12 +19,6 @@
 #   --k8s-version           Version de Kubernetes
 #   --containerd-version    Version de containerd (Par défaut: 1.7.14)"
 
-# Vérification de l'exécution en mode root
-if [ "$EUID" -ne 0 ]; then
-    echo "Ce script doit être exécuté en tant que root."
-    exit 1
-fi
-
 # Initialisation des variables
 hostname=""
 hostfile=""
@@ -32,9 +26,18 @@ k8sVersion=""
 repok8sVersion=""
 k8sPathSetting=""
 containerdVersion="1.7.13"
+CONTAINERD_TMP=""
+
+# Vérification de l'exécution en mode root
+checkIfRoot() {
+    if [ "$EUID" -ne 0 ]; then
+        echo "Ce script doit être exécuté en tant que root."
+        exit 1
+    fi
+}
 
 # Définition de la fonction d'aide
-function displayHelp {
+displayHelp() {
     echo "Usage: $0 [options]"
     echo "Options:"
     echo "  -h, --help              Afficher cette aide"
@@ -42,14 +45,173 @@ function displayHelp {
     echo "  --hostfile              Fichier d'hôtes"
     echo "  --k8s-version           Version de Kubernetes"
     echo "  --containerd-version    Version de containerd (Par défaut: 1.7.14)"
-    exit 0
 }
+
+# Vérification des options entrées
+verifyOptions() {
+    if [[ -z $hostname ]] || [[ -z $hostfile ]] || [[ -z $k8sVersion ]]; then
+        echo "Les options --hostname, --hostfile et --k8s-version sont obligatoires."
+        displayHelp
+        exit 1
+    fi
+
+    if [ ! -f "$hostfile" ]; then
+        echo "Le fichier de configuration $hostfile n'existe pas."
+        exit 1
+    fi
+
+    validationk8sVersion="^[0-9]+\.[0-9]+\.[0-9]+$"
+    if ! [[ $k8sVersion =~ $validationk8sVersion ]]; then
+        echo "Erreur: $k8sVersion n'est pas sous le format x.y.z où x, y et z sont des nombres."
+        exit 1
+    fi
+}
+
+# Configuration du système
+setupSystem() {
+    echo -e "\nConfiguration du système en cours...\n"
+
+    # Configuration du hostname du serveur
+    hostnamectl set-hostname $hostname
+    HOSTNAME="$hostname"
+
+    while read -r ip host; do
+        echo -e "$ip\t$host" >> /etc/hosts
+    done < "$hostfile"
+
+    setenforce 0
+    sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
+
+    echo -e "\n----Ajout d'une règle masquerade NAT----\n"
+
+    firewall-cmd --add-masquerade --permanent
+    firewall-cmd --reload
+
+    swapoff -a
+    sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+    cat << EOF | tee /etc/modules-load.d/containerd.conf
+overlay
+br_netfilter
+EOF
+    modprobe overlay
+    modprobe br_netfilter
+
+    cat <<EOF | tee /etc/sysctl.d/99-kubernetes-cri.conf
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+EOF
+    sysctl --system
+
+    echo -e "\nConfiguration du système : OK\n"
+}
+
+# Configuration de containerd
+setupContainerd() {
+    echo -e "\nInstallation et configuration de containerd en cours...\n"
+
+    mkdir -p /usr/local/bin
+
+    k8sPathSetting="/etc/profile.d/usr_local_bin_path_setting.sh"
+    if [[ ":$PATH:" != *":/usr/local/bin:"* ]]; then
+        echo 'export PATH=$PATH:/usr/local/bin' > $k8sPathSetting
+    fi
+    if [ -f "$k8sPathSetting" ]; then
+        source $k8sPathSetting
+    fi
+
+    CONTAINERD_TMP="$(mktemp -dt containerd-installer-XXXXXX)"
+
+    wget -P $CONTAINERD_TMP https://github.com/containerd/containerd/releases/download/v$containerdVersion/containerd-$containerdVersion-linux-amd64.tar.gz
+    tar Czxvf $CONTAINERD_TMP $CONTAINERD_TMP/containerd-$containerdVersion-linux-amd64.tar.gz
+    mv $CONTAINERD_TMP/bin/* /usr/local/bin/
+
+    wget -P $CONTAINERD_TMP https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
+    mv "$CONTAINERD_TMP/containerd.service" /usr/lib/systemd/system/
+    chown root:root /usr/lib/systemd/system/containerd.service
+    restorecon /usr/lib/systemd/system/containerd.service
+    systemctl daemon-reload
+    systemctl enable --now containerd
+
+    mkdir -p /etc/containerd
+    containerd config default | tee /etc/containerd/config.toml
+    sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+    systemctl restart containerd
+
+    echo -e "\nInstallation et configuration de containerd : OK\n"
+}
+
+# Installation des packages du nfs client
+setupNFSClient() {
+    echo -e "\nInstallation du client NFS en cours...\n"
+
+    dnf install -y nfs-utils nfs4-acl-tools
+
+    echo -e "\nInstallation du client NFS : OK\n"
+}
+
+# Installation des packages de kubernetes
+setupKubernetes() {
+    echo -e "\nInstallation de kubernetes en cours...\n"
+
+    repok8sVersion="${k8sVersion%.*}"
+    cat <<EOF | tee /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://pkgs.k8s.io/core:/stable:/v$repok8sVersion/rpm/
+enabled=1
+gpgcheck=1
+gpgkey=https://pkgs.k8s.io/core:/stable:/v$repok8sVersion/rpm/repodata/repomd.xml.key
+exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
+EOF
+
+    dnf install -y kubelet-$k8sVersion kubeadm-$k8sVersion kubectl-$k8sVersion --disableexcludes=kubernetes
+    systemctl enable --now kubelet
+
+    cat <<EOF | tee /etc/crictl.yaml
+runtime-endpoint: unix:///var/run/containerd/containerd.sock
+image-endpoint: unix:///var/run/containerd/containerd.sock
+timeout: 10
+debug: true
+EOF
+    echo -e "\nInstallation de kubernetes : OK\n"
+}
+
+# Nettoyage du répertoire temporaire d'installation de containerd
+cleanup() {
+  if [[ -d "${CONTAINERD_TMP:-}" ]]; then
+    rm -rf "$CONTAINERD_TMP"
+  fi
+}
+
+# failTrap est exécuté si une erreur se produit.
+failTrap() {
+    result=$?
+
+    if [ "$result" != "0" ]; then
+        echo -e "\tEchec de préparation du noeud du cluster kubernetes."
+    fi
+    
+    cleanup
+    exit $result
+}
+
+
+# Execution
+
+# Arrêter l'exécution en cas d'erreur
+trap "failTrap" EXIT
+set -e
+
+checkIfRoot
 
 # Traitement des options avec getopts
 while getopts ":h-:" opt; do
     case ${opt} in
         h)
           displayHelp
+          exit 0
           ;;
         -)
             case "${OPTARG}" in
@@ -67,6 +229,7 @@ while getopts ":h-:" opt; do
                   ;;
                 help)
                   displayHelp
+                  exit 0
                   ;;
                 *)
                   echo "Option invalide: --${OPTARG}"
@@ -82,139 +245,11 @@ while getopts ":h-:" opt; do
 done
 shift $((OPTIND -1))
 
-# Vérification de la présence de toutes les options obligatoires
-if [[ -z $hostname ]] || [[ -z $hostfile ]] || [[ -z $k8sVersion ]]; then
-    echo "Les options --hostname, --hostfile et --k8s-version sont obligatoires."
-    displayHelp
-fi
+verifyOptions
+setupSystem
+setupContainerd
+setupNFSClient
+setupKubernetes
+cleanup
 
-# Vérification de l'existence du fichier de configuration
-if [ ! -f "$hostfile" ]; then
-    echo "Le fichier de configuration $hostfile n'existe pas."
-    exit 1
-fi
-
-# Vérification du format de la version de k8s
-validationk8sVersion="^[0-9]+\.[0-9]+\.[0-9]+$"
-if ! [[ $k8sVersion =~ $validationk8sVersion ]]; then
-    echo "Erreur: $k8sVersion n'est pas sous le format x.y.z où x, y et z sont des nombres."
-    exit 1
-fi
-
-
-echo -e "\n----Configuration du hostname et du fichier /etc/hosts----\n"
-
-# Configuration du hostname du serveur
-hostnamectl set-hostname $hostname
-HOSTNAME="$hostname"
-
-while read -r ip host; do
-    echo -e "$ip\t$host" >> /etc/hosts
-done < "$hostfile"
-
-
-echo -e "\n----Configuration de selinux en mode permissive----\n"
-
-setenforce 0
-sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
-
-
-echo -e "\n----Ajout d'une règle masquerade NAT----\n"
-
-firewall-cmd --add-masquerade --permanent
-firewall-cmd --reload
-
-
-echo -e "\n----Désactivation du swap----\n"
-
-swapoff -a
-sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
-
-
-echo -e "\n----Configuration des modules kernel : overlay et br_netfilter pour containerd----\n"
-cat << EOF | tee /etc/modules-load.d/containerd.conf
-overlay
-br_netfilter
-EOF
-
-modprobe overlay
-modprobe br_netfilter
-
-
-echo -e "\n----Activation du routage des paquets----\n"
-
-cat <<EOF | tee /etc/sysctl.d/99-kubernetes-cri.conf
-net.bridge.bridge-nf-call-iptables = 1
-net.ipv4.ip_forward = 1
-net.bridge.bridge-nf-call-ip6tables = 1
-EOF
-
-sysctl --system
-
-
-echo -e "\n----Installation et configuration de containerd----\n"
-
-k8sPathSetting="/etc/profile.d/usr_local_bin_path_setting.sh"
-if [[ ":$PATH:" != *":/usr/local/bin:"* ]]; then
-    echo 'export PATH=$PATH:/usr/local/bin' > $k8sPathSetting
-fi
-if [ -f "$k8sPathSetting" ]; then
-    source $k8sPathSetting
-fi
-
-wget -P /tmp https://github.com/containerd/containerd/releases/download/v$containerdVersion/containerd-$containerdVersion-linux-amd64.tar.gz
-tar Czxvf /usr/local /tmp/containerd-$containerdVersion-linux-amd64.tar.gz
-wget -P /tmp https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
-mv /tmp/containerd.service /usr/lib/systemd/system/
-chown root:root /usr/lib/systemd/system/containerd.service
-restorecon /usr/lib/systemd/system/containerd.service
-systemctl daemon-reload
-systemctl enable --now containerd
-
-mkdir -p /etc/containerd
-containerd config default | tee /etc/containerd/config.toml
-sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
-systemctl restart containerd
-
-
-echo -e "\n----Installation du client NFS via les packages nfs-utils, nfs4-acl-tools----\n"
-
-dnf install -y nfs-utils nfs4-acl-tools
-if [ $? -ne 0 ]; then
-    echo "Echec d'installation des packages nfs-utils, nfs4-acl-tools"
-    exit 1
-fi
-
-
-echo -e "\n----Installation de kubeadm, kubelet et kubectl----\n"
-
-repok8sVersion="${k8sVersion%.*}"
-cat <<EOF | tee /etc/yum.repos.d/kubernetes.repo
-[kubernetes]
-name=Kubernetes
-baseurl=https://pkgs.k8s.io/core:/stable:/v$repok8sVersion/rpm/
-enabled=1
-gpgcheck=1
-gpgkey=https://pkgs.k8s.io/core:/stable:/v$repok8sVersion/rpm/repodata/repomd.xml.key
-exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
-EOF
-
-dnf install -y kubelet-$k8sVersion kubeadm-$k8sVersion kubectl-$k8sVersion --disableexcludes=kubernetes
-if [ $? -ne 0 ]; then
-    echo "Echec d'installation des packages kubeadm, kubelet et kubectl"
-    exit 1
-fi
-systemctl enable --now kubelet
-
-
-echo -e "\n----Configuration de cri-tools pour sa connexion à containerd----\n"
-
-cat <<EOF | tee /etc/crictl.yaml
-runtime-endpoint: unix:///var/run/containerd/containerd.sock
-image-endpoint: unix:///var/run/containerd/containerd.sock
-timeout: 10
-debug: true
-EOF
-
-
-echo -e "\n----Configuration commune à tous les noeuds avec succès----\n"
+echo -e "\nConfiguration de base : OK\n"
