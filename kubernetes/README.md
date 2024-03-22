@@ -4,7 +4,7 @@ Kubernetes est une plateforme open source de gestion d'orchestration de conteneu
 
 ### Bac à sable
 
-Nous mettons en place notre sandbox d'installation de kubernetes via l'utilitaire **vagrant** qui nous permettra d'installer :
+Nous mettons en place notre sandbox d'installation de kubernetes via l'utilitaire **vagrant** depuis une machine hôte **ubuntu 20.04**, qui nous permettra d'installer :
 - 3 machines virtuelles virtualbox **Rocky linux 8.9** pour notre cluster kubernetes : 1 noeud master et 2 noeuds worker
 - 1 machine virtuelle virtualbox **Rocky linux 8.9** pour les services DNS et stockage NFS
 
@@ -84,8 +84,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 end
 ```
-
-NB: Notre bac à sable est conçu depuis une machine hôte **ubuntu 20.04**.
 
 ### Installation de k8s version 1.27
 
