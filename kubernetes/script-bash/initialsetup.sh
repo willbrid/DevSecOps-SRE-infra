@@ -31,7 +31,7 @@ hostfile=""
 k8sVersion=""
 repok8sVersion=""
 k8sPathSetting=""
-containerdVersion="1.7.14"
+containerdVersion="1.7.13"
 
 # Définition de la fonction d'aide
 function displayHelp {
@@ -154,12 +154,8 @@ sysctl --system
 echo -e "\n----Installation et configuration de containerd----\n"
 
 k8sPathSetting="/etc/profile.d/usr_local_bin_path_setting.sh"
-if [[ ":$PATH:" != *":/usr/local/bin:"* ]] && [[ ":$PATH:" != *":/usr/local/sbin:"* ]]; then
-    echo 'export PATH=$PATH:/usr/local/bin:/usr/local/sbin' > $k8sPathSetting
-elif [[ ":$PATH:" != *":/usr/local/bin:"* ]]; then
+if [[ ":$PATH:" != *":/usr/local/bin:"* ]]; then
     echo 'export PATH=$PATH:/usr/local/bin' > $k8sPathSetting
-elif [[ ":$PATH:" != *":/usr/local/sbin:"* ]]; then
-    echo 'export PATH=$PATH:/usr/local/sbin' > $k8sPathSetting
 fi
 if [ -f "$k8sPathSetting" ]; then
     source $k8sPathSetting
