@@ -120,16 +120,19 @@ fi
 
 echo -e "\n----Création et montage d'une partition de stockage NFS----\n"
 
-parted -s -a optimal -- $deviceName mklabel gpt
-parted -s -a optimal -- $deviceName mkpart primary ext4 0% $deviceSize"%"
-parted -s -- $deviceName align-check optimal $deviceNum
-mkfs.ext4 $deviceName$deviceNum
 mkdir -p /data
-echo "$deviceName$deviceNum /data ext4 defaults 0 0" | tee -a /etc/fstab
-mount -a
-if ! df -h | grep /data; then
-    echo "Erreur de création et montage de la partition de stockage NFS $deviceName$deviceNum."
-    exit 1
+if ! ls -l $deviceName$deviceNum &> /dev/null; then
+    parted -s -a optimal -- $deviceName mklabel gpt
+    parted -s -a optimal -- $deviceName mkpart primary ext4 0% $deviceSize"%"
+    parted -s -- $deviceName align-check optimal $deviceNum
+    mkfs.ext4 $deviceName$deviceNum
+    echo "$deviceName$deviceNum /data ext4 defaults 0 0" | tee -a /etc/fstab
+    mount -a
+else
+    if ! df -h | grep /data; then
+        echo "$deviceName$deviceNum /data ext4 defaults 0 0" | tee -a /etc/fstab
+        mount -a
+    fi
 fi
 
 
