@@ -161,9 +161,25 @@ sudo ./nfs-server-setup.sh --nfs-network=192.168.56.0/24 --device-name=sdb --dev
 sudo su
 ```
 
+- Installation de Helm
+
 ```
-curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 ```
+
+```
+chmod +x get_helm.sh
+```
+
+```
+./get_helm.sh
+```
+
+```
+helm version
+```
+
+- Installation du provisionneur
 
 ```
 helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
