@@ -193,6 +193,8 @@ nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
 --set storageClass.onDelete=true
 ```
 
+La classe de stockage dynamique NFS a été installée et porte le nom de **nfs-client**.
+
 ### Référence
 
 - [Kubernetes Documentation](https://kubernetes.io/docs/home/)
