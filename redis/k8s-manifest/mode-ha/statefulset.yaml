@@ -70,7 +70,7 @@ spec:
       name: redis-store-data
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: "custom-storage-class" # Il faudrait remplacer cette valeur par celle de votre classe de stockage
+      storageClassName: nfs-client
       resources:
         requests:
-          storage: 20Gi
+          storage: 5Gi

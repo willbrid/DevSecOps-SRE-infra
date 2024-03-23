@@ -54,8 +54,8 @@ spec:
     - metadata:
         name: mongodb
       spec:
-        storageClassName: "custom-storage-class"
+        storageClassName: nfs-client
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: 10Gi
+            storage: 5Gi

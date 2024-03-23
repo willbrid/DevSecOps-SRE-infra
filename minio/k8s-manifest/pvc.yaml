@@ -9,6 +9,6 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
-  storageClassName: custom-storage-class
+      storage: 5Gi
+  storageClassName: nfs-client
   volumeMode: Filesystem
