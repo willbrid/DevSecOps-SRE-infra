@@ -14,6 +14,11 @@
 #   --pod-network      Plage du réseau du cluster (valeur par défaut = 172.16.0.0/16)
 
 # Initialisation des variables
+HAS_KUBEADM="$(type "kubeadm" &> /dev/null && echo true || echo false)"
+HAS_KUBECTL="$(type "kubectl" &> /dev/null && echo true || echo false)"
+HAS_KUBELET="$(type "kubelet" &> /dev/null && echo true || echo false)"
+HAS_CONTAINERD="$(type "/usr/local/bin/containerd" &> /dev/null && echo true || echo false)"
+
 defaultPodnetwork="172.16.0.0/16"
 podnetwork="$defaultPodnetwork"
 validationPodnetwork=""
@@ -73,7 +78,7 @@ verifyOptions() {
 
 # Vérification de la présence des packages kubeadm, kubelet, kubectl et containerd
 checkDependency() {
-    if ! command -v kubeadm &> /dev/null || ! command -v kubelet &> /dev/null || ! command -v kubectl || ! command -v containerd &> /dev/null; then
+    if [ "${HAS_KUBEADM}" != "true" ] || [ "${HAS_KUBECTL}" != "true" ] || [ "${HAS_KUBELET}" != "true" ] || [ "${HAS_CONTAINERD}" != "true" ]; then
         echo "Veuillez installer les packages kubeadm, kubelet, kubectl et containerd pour exécuter ce script. Veuillez utiliser le script common-setup.sh"
         exit 1
     fi
@@ -106,7 +111,7 @@ initCluster() {
 
 # failTrap est exécuté si une erreur se produit.
 failTrap() {
-    result=$?
+    local result=$?
     
     if [ "$result" != "0" ]; then
         echo -e "\tEchec de configuration du noeud master du cluster kubernetes."
