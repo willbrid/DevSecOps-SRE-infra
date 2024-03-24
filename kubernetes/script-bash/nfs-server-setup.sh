@@ -111,7 +111,7 @@ configureNFSStorage() {
 configureNFSService() {
     echo -e "\nConfiguration du service de stockage NFS en cours...\n"
 
-    dnf install -y nfs-utils
+    dnf -q install -y nfs-utils
 
     mkdir -p /data/$sharedname
     chown nobody:nobody /data/$sharedname
@@ -131,7 +131,7 @@ configureNFSService() {
 
 # failTrap est exécuté si une erreur se produit.
 failTrap() {
-    result=$?
+    local result=$?
     
     if [ "$result" != "0" ]; then
         echo -e "\tEchec de configuration du serveur NFS."
