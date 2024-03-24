@@ -126,7 +126,7 @@ setupContainerd() {
     tar Czxvf $CONTAINERD_TMP $CONTAINERD_TMP/containerd-$containerdVersion-linux-amd64.tar.gz
     mv $CONTAINERD_TMP/bin/* /usr/local/bin/
 
-    wget -P $CONTAINERD_TMP https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
+    wget -q -P $CONTAINERD_TMP https://raw.githubusercontent.com/containerd/containerd/main/containerd.service 2>&1
     mv "$CONTAINERD_TMP/containerd.service" /usr/lib/systemd/system/
     chown root:root /usr/lib/systemd/system/containerd.service
     restorecon /usr/lib/systemd/system/containerd.service
@@ -145,7 +145,7 @@ setupContainerd() {
 setupNFSClient() {
     echo -e "\nInstallation du client NFS en cours...\n"
 
-    dnf install -y nfs-utils nfs4-acl-tools
+    dnf -q install -y nfs-utils nfs4-acl-tools
 
     echo -e "\nInstallation du client NFS : OK\n"
 }
@@ -165,7 +165,7 @@ gpgkey=https://pkgs.k8s.io/core:/stable:/v$repok8sVersion/rpm/repodata/repomd.xm
 exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
 EOF
 
-    dnf install -y kubelet-$k8sVersion kubeadm-$k8sVersion kubectl-$k8sVersion --disableexcludes=kubernetes
+    dnf -q install -y kubelet-$k8sVersion kubeadm-$k8sVersion kubectl-$k8sVersion --disableexcludes=kubernetes
     systemctl enable --now kubelet
 
     cat <<EOF | tee /etc/crictl.yaml
