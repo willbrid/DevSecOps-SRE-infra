@@ -78,7 +78,7 @@ verifyOptions() {
 
 # Vérification de la présence des packages kubeadm, kubelet, kubectl et containerd
 checkDependency() {
-    if [ "${HAS_KUBEADM}" != "true" ] || [ "${HAS_KUBECTL}" != "true" ] || [ "${HAS_KUBELET}" != "true" ] || [ "${HAS_CONTAINERD}" != "true" ]; then
+    if [ "$HAS_KUBEADM" != "true" ] || [ "$HAS_KUBECTL" != "true" ] || [ "$HAS_KUBELET" != "true" ] || [ "$HAS_CONTAINERD" != "true" ] ; then
         echo "Veuillez installer les packages kubeadm, kubelet, kubectl et containerd pour exécuter ce script. Veuillez utiliser le script common-setup.sh"
         exit 1
     fi
