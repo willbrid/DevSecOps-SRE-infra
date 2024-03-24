@@ -9,6 +9,11 @@
 #   sudo ./worker-setup.sh
 
 # Initialisation des variables
+HAS_KUBEADM="$(type "kubeadm" &> /dev/null && echo true || echo false)"
+HAS_KUBECTL="$(type "kubectl" &> /dev/null && echo true || echo false)"
+HAS_KUBELET="$(type "kubelet" &> /dev/null && echo true || echo false)"
+HAS_CONTAINERD="$(type "/usr/local/bin/containerd" &> /dev/null && echo true || echo false)"
+
 joinfile="/home/vagrant/shared/join-command.sh"
 
 # Vérification de l'exécution en mode root
@@ -21,7 +26,7 @@ checkIfRoot() {
 
 # Vérification de la présence des packages kubeadm, kubelet, kubectl et containerd
 checkDependency() {
-    if ! command -v kubeadm &> /dev/null || ! command -v kubelet &> /dev/null || ! command -v kubectl || ! command -v containerd &> /dev/null; then
+    if [ "$HAS_KUBEADM" != "true" ] || [ "$HAS_KUBECTL" != "true" ] || [ "$HAS_KUBELET" != "true" ] || [ "$HAS_CONTAINERD" != "true" ] ; then
         echo "Veuillez installer les packages kubeadm, kubelet, kubectl et containerd pour exécuter ce script. Veuillez utiliser le script common-setup.sh"
         exit 1
     fi
@@ -42,7 +47,7 @@ joinWorkerToCluster() {
     firewall-cmd --permanent --add-port={10250,30000-32767}/tcp
     firewall-cmd --reload
 
-    joincommand=$(<"$joinfile")
+    local joincommand=$(<"$joinfile")
     eval "$joincommand"
 
     echo -e "\nAjout du noeud dans le cluster : OK\n"
@@ -50,7 +55,7 @@ joinWorkerToCluster() {
 
 # failTrap est exécuté si une erreur se produit.
 failTrap() {
-    result=$?
+    local result=$?
     
     if [ "$result" != "0" ]; then
         echo -e "\tEchec d'ajout du noeud worker au cluster kubernetes."
