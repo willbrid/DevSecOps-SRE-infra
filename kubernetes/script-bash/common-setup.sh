@@ -122,7 +122,7 @@ setupContainerd() {
 
     CONTAINERD_TMP="$(mktemp -dt containerd-installer-XXXXXXX)"
 
-    wget -P $CONTAINERD_TMP https://github.com/containerd/containerd/releases/download/v$containerdVersion/containerd-$containerdVersion-linux-amd64.tar.gz
+    wget -q -P $CONTAINERD_TMP https://github.com/containerd/containerd/releases/download/v$containerdVersion/containerd-$containerdVersion-linux-amd64.tar.gz 2>&1
     tar Czxvf $CONTAINERD_TMP $CONTAINERD_TMP/containerd-$containerdVersion-linux-amd64.tar.gz
     mv $CONTAINERD_TMP/bin/* /usr/local/bin/
 
