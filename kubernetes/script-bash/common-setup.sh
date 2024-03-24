@@ -17,7 +17,7 @@
 #   --hostname              Nom d'hôte à configurer
 #   --hostfile              Fichier d'hôtes
 #   --k8s-version           Version de Kubernetes
-#   --containerd-version    Version de containerd (Par défaut: 1.7.14)"
+#   --containerd-version    Version de containerd (Par défaut: 1.7.13)"
 
 # Initialisation des variables
 hostname=""
@@ -44,7 +44,7 @@ displayHelp() {
     echo "  --hostname              Nom d'hôte à configurer"
     echo "  --hostfile              Fichier d'hôtes"
     echo "  --k8s-version           Version de Kubernetes"
-    echo "  --containerd-version    Version de containerd (Par défaut: 1.7.14)"
+    echo "  --containerd-version    Version de containerd (Par défaut: 1.7.13)"
 }
 
 # Vérification des options entrées
@@ -73,7 +73,6 @@ setupSystem() {
 
     # Configuration du hostname du serveur
     hostnamectl set-hostname $hostname
-    HOSTNAME="$hostname"
 
     while read -r ip host; do
         echo -e "$ip\t$host" >> /etc/hosts
@@ -121,7 +120,7 @@ setupContainerd() {
         source $k8sPathSetting
     fi
 
-    CONTAINERD_TMP="$(mktemp -dt containerd-installer-XXXXXX)"
+    CONTAINERD_TMP="$(mktemp -dt containerd-installer-XXXXXXX)"
 
     wget -P $CONTAINERD_TMP https://github.com/containerd/containerd/releases/download/v$containerdVersion/containerd-$containerdVersion-linux-amd64.tar.gz
     tar Czxvf $CONTAINERD_TMP $CONTAINERD_TMP/containerd-$containerdVersion-linux-amd64.tar.gz
