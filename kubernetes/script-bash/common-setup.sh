@@ -24,7 +24,7 @@ hostname=""
 hostfile=""
 k8sVersion=""
 repok8sVersion=""
-k8sPathSetting=""
+usrLocalBinPathSetting=""
 containerdVersion="1.7.13"
 CONTAINERD_TMP=""
 
@@ -112,12 +112,12 @@ setupContainerd() {
 
     mkdir -p /usr/local/bin
 
-    k8sPathSetting="/etc/profile.d/usr_local_bin_path_setting.sh"
+    usrLocalBinPathSetting="/etc/profile.d/usr_local_bin_path_setting.sh"
     if [[ ":$PATH:" != *":/usr/local/bin:"* ]]; then
-        echo 'export PATH=$PATH:/usr/local/bin' > $k8sPathSetting
+        echo 'export PATH=$PATH:/usr/local/bin' > $usrLocalBinPathSetting
     fi
-    if [ -f "$k8sPathSetting" ]; then
-        source $k8sPathSetting
+    if [ -f "$usrLocalBinPathSetting" ]; then
+        source $usrLocalBinPathSetting
     fi
 
     CONTAINERD_TMP="$(mktemp -dt containerd-installer-XXXXXXX)"
