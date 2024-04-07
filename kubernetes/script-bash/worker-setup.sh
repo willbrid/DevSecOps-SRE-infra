@@ -58,7 +58,7 @@ failTrap() {
     local result=$?
     
     if [ "$result" != "0" ]; then
-        echo -e "\tEchec d'ajout du noeud worker au cluster kubernetes."
+        echo -e "\nEchec d'ajout du noeud worker au cluster kubernetes."
     fi
     
     exit $result

@@ -187,7 +187,7 @@ failTrap() {
     local result=$?
 
     if [ "$result" != "0" ]; then
-        echo -e "\tEchec de préparation du noeud du cluster kubernetes."
+        echo -e "\nEchec de préparation du noeud du cluster kubernetes."
     fi
     
     cleanup

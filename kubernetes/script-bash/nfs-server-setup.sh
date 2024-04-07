@@ -134,7 +134,7 @@ failTrap() {
     local result=$?
     
     if [ "$result" != "0" ]; then
-        echo -e "\tEchec de configuration du serveur NFS."
+        echo -e "\nEchec de configuration du serveur NFS."
     fi
     
     exit $result

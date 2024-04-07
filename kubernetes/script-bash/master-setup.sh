@@ -114,7 +114,7 @@ failTrap() {
     local result=$?
     
     if [ "$result" != "0" ]; then
-        echo -e "\tEchec de configuration du noeud master du cluster kubernetes."
+        echo -e "\nEchec de configuration du noeud master du cluster kubernetes."
     fi
     
     exit $result
