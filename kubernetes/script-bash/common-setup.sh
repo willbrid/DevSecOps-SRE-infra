@@ -81,8 +81,6 @@ setupSystem() {
     setenforce 0
     sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
 
-    echo -e "\n----Ajout d'une règle masquerade NAT----\n"
-
     firewall-cmd --add-masquerade --permanent
     firewall-cmd --reload
 
