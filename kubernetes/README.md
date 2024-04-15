@@ -10,7 +10,7 @@ Nous mettons en place notre sandbox d'installation de kubernetes via l'utilitair
 - 1 machine virtuelle virtualbox **Rocky linux 8.9** pour le service haproxy (load balanceur) et dns
 
 <p align="center">
-<img src="./images/arch-k8s.png" alt="arch-k8s.png" width="620" height="520" />
+<img src="./images/arch-k8s.png" alt="arch-k8s.png" width="500" height="520" />
 </p>
 
 ```
@@ -83,12 +83,19 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     srv.vm.hostname = "nfs-storage"
     srv.vm.network :private_network, ip: "192.168.56.203"
     srv.vm.disk :disk, name: "storage", size: "100GB"
+    srv.vm.provider :virtualbox do |v|
+        v.memory = 2048
+    end
   end
 
   # LB-SRV
   config.vm.define "lb-srv" do |srv|
     srv.vm.hostname = "lb-srv"
     srv.vm.network :private_network, ip: "192.168.56.204"
+    srv.vm.provider :virtualbox do |v|
+        v.memory = 2048
+        v.cpus = 1
+    end
   end
 end
 ```
