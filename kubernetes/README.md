@@ -6,10 +6,11 @@ Kubernetes est une plateforme open source de gestion d'orchestration de conteneu
 
 Nous mettons en place notre sandbox d'installation de kubernetes via l'utilitaire **vagrant** depuis une machine hôte **ubuntu 20.04**, qui nous permettra d'installer :
 - 3 machines virtuelles virtualbox **Rocky linux 8.9** pour notre cluster kubernetes : 1 noeud master et 2 noeuds worker
-- 1 machine virtuelle virtualbox **Rocky linux 8.9** pour les services DNS et stockage NFS
+- 1 machine virtuelle virtualbox **Rocky linux 8.9** pour le service de stockage NFS
+- 1 machine virtuelle virtualbox **Rocky linux 8.9** pour le service haproxy (load balanceur) et dns
 
 <p align="center">
-<img src="./images/physical-architecture.png" alt="physical-architecture.png" width="620" height="520" />
+<img src="./images/arch-k8s.png" alt="arch-k8s.png" width="620" height="520" />
 </p>
 
 ```
@@ -77,11 +78,17 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     srv.vm.network :private_network, ip: "192.168.56.202"
   end
 
-  # External-control
-  config.vm.define "external-control" do |srv|
-    srv.vm.hostname = "external-control"
+  # NFS-Storage
+  config.vm.define "nfs-storage" do |srv|
+    srv.vm.hostname = "nfs-storage"
     srv.vm.network :private_network, ip: "192.168.56.203"
     srv.vm.disk :disk, name: "storage", size: "100GB"
+  end
+
+  # LB-SRV
+  config.vm.define "lb-srv" do |srv|
+    srv.vm.hostname = "lb-srv"
+    srv.vm.network :private_network, ip: "192.168.56.204"
   end
 end
 ```
@@ -141,7 +148,7 @@ chmod +x worker-setup.sh
 sudo ./worker-setup.sh
 ```
 
-### Installation du service NFS sur le serveur external-control
+### Installation du service NFS sur le serveur nfs-storage
 
 ```
 git clone https://github.com/willbrid/DevSecOps-SRE-infra.git
