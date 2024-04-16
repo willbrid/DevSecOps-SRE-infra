@@ -213,6 +213,76 @@ nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
 
 La classe de stockage dynamique NFS a été installée et porte le nom de **nfs-client**.
 
+### Installation du controlleur ingress nginx depuis notre noeud master
+
+- Récupération des manifests controlleur ingress nginx
+
+```
+git clone https://github.com/techiescamp/nginx-ingress-controller
+```
+
+```
+cd nginx-ingress-controller/manifests
+```
+
+- Configuration du déploiement à 2 instances afin qu'elles soient déployées chacune sur chaque noeud worker
+
+```
+vi deployment.yaml
+```
+
+```
+...
+spec:
+  replicas: 2
+...
+```
+
+- Configuration de l'adresse du load balanceur sur le service **ingress-nginx-controller** dans le fichier **services.yaml**
+
+```
+vi services.yaml
+```
+
+```
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+    app.kubernetes.io/version: 1.9.4
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
+spec:
+  externalIPs:
+  - 192.168.56.204
+...
+```
+
+- Déploiement du controlleur ingress nginx
+
+```
+kubectl apply -f .
+```
+
+- Vérification de l'installation du controlleur ingress nginx
+
+```
+kubectl get deployment -n ingress-nginx
+```
+
+```
+kubectl get pods -n ingress-nginx
+```
+
+```
+kubectl get svc -n ingress-nginx
+```
+
 ### Référence
 
 - [Kubernetes Documentation](https://kubernetes.io/docs/home/)
+- [Devopscube setup ingress nginx controller](https://devopscube.com/setup-ingress-kubernetes-nginx-controller/)
