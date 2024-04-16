@@ -166,7 +166,11 @@ cd DevSecOps-SRE-infra/kubernetes/script-bash
 ```
 
 ```
-sudo ./nfs-server-setup.sh --nfs-network=192.168.56.0/24 --device-name=sdb --device-num=1 --device-size=50
+chmod +x nfs-server-setup.sh
+```
+
+```
+sudo ./nfs-server-setup.sh --nfs-network=192.168.56.0/24 --device-name=sdb --device-num=1 --device-size=100
 ```
 
 ### Installation du provisionneur de volume persistant dans notre cluster depuis notre noeud master
