@@ -61,9 +61,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define "control-node" do |srv|
     srv.vm.hostname = "control-node"
     srv.vm.network :private_network, ip: "192.168.56.200"
-    srv.vm.provider :virtualbox do |v|
-        v.memory = 2048
-    end
   end
 
   # Worker1
