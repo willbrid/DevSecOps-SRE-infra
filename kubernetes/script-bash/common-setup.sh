@@ -22,14 +22,16 @@
 # Initialisation des variables
 hostname=""
 hostfile=""
-k8sVersion=""
-repok8sVersion=""
-usrLocalBinPathSetting=""
-containerdVersion="1.7.13"
-CONTAINERD_TMP=""
+k8s_version=""
+usr_local_bin_path_setting=""
+containerd_version="1.7.13"
+
+readonly VALIDATION_K8S_VERSION="^[0-9]+\.[0-9]+\.[0-9]+$"
+readonly HAS_CURL="$(type "curl" &> /dev/null && echo true || echo false)"
+readonly HAS_WGET="$(type "wget" &> /dev/null && echo true || echo false)"
 
 # Vérification de l'exécution en mode root
-checkIfRoot() {
+check_if_root() {
     if [ "$EUID" -ne 0 ]; then
         echo "Ce script doit être exécuté en tant que root."
         exit 1
@@ -37,7 +39,7 @@ checkIfRoot() {
 }
 
 # Définition de la fonction d'aide
-displayHelp() {
+display_help() {
     echo "Usage: $0 [options]"
     echo "Options:"
     echo "  -h, --help              Afficher cette aide"
@@ -47,11 +49,18 @@ displayHelp() {
     echo "  --containerd-version    Version de containerd (Par défaut: 1.7.13)"
 }
 
+check_dependency() {
+    if [ "$HAS_CURL" != "true" ] && [ "$HAS_WGET" != "true" ] ; then
+        echo "Erreur: veuillez installer curl ou wget."
+        exit 1
+    fi
+}
+
 # Vérification des options entrées
-verifyOptions() {
-    if [[ -z $hostname ]] || [[ -z $hostfile ]] || [[ -z $k8sVersion ]]; then
+verify_options() {
+    if [[ -z $hostname ]] || [[ -z $hostfile ]] || [[ -z $k8s_version ]]; then
         echo "Les options --hostname, --hostfile et --k8s-version sont obligatoires."
-        displayHelp
+        display_help
         exit 1
     fi
 
@@ -60,17 +69,14 @@ verifyOptions() {
         exit 1
     fi
 
-    validationk8sVersion="^[0-9]+\.[0-9]+\.[0-9]+$"
-    if ! [[ $k8sVersion =~ $validationk8sVersion ]]; then
-        echo "Erreur: $k8sVersion n'est pas sous le format x.y.z où x, y et z sont des nombres."
+    if ! [[ $k8s_version =~ $VALIDATION_K8S_VERSION ]]; then
+        echo "Erreur: $k8s_version n'est pas sous le format x.y.z où x, y et z sont des nombres."
         exit 1
     fi
 }
 
 # Configuration du système
-setupSystem() {
-    echo -e "\nConfiguration du système en cours...\n"
-
+setup_system() {
     # Configuration du hostname du serveur
     hostnamectl set-hostname $hostname
 
@@ -105,29 +111,43 @@ EOF
 }
 
 # Configuration de containerd
-setupContainerd() {
-    echo -e "\nInstallation et configuration de containerd en cours...\n"
-
+setup_containerd() {
     mkdir -p /usr/local/bin
 
-    usrLocalBinPathSetting="/etc/profile.d/usr_local_bin_path_setting.sh"
+    usr_local_bin_path_setting="/etc/profile.d/usr_local_bin_path_setting.sh"
     if [[ ":$PATH:" != *":/usr/local/bin:"* ]]; then
-        echo 'export PATH=$PATH:/usr/local/bin' > $usrLocalBinPathSetting
+        echo 'export PATH=$PATH:/usr/local/bin' > $usr_local_bin_path_setting
     fi
-    if [ -f "$usrLocalBinPathSetting" ]; then
-        source $usrLocalBinPathSetting
+    if [ -f "$usr_local_bin_path_setting" ]; then
+        source $usr_local_bin_path_setting
     fi
 
-    CONTAINERD_TMP="$(mktemp -dt containerd-installer-XXXXXXX)"
+    readonly CONTAINERD_DIST="containerd-$containerd_version-linux-amd64.tar.gz"
+    readonly CONTAINERD_TMP_ROOT="$(mktemp -dt containerd-installer-XXXXXXX)"
+    readonly CONTAINERD_DOWNLOAD_URL="https://github.com/containerd/containerd/releases/download/v$containerd_version/$CONTAINERD_DIST"
+    readonly CONTAINERD_SERVICE_DIST="containerd.service"
+    readonly CONTAINERD_SERVICE_DOWNLOAD_URL="https://raw.githubusercontent.com/containerd/containerd/main/$CONTAINERD_SERVICE_DIST"
 
-    wget -q -P $CONTAINERD_TMP https://github.com/containerd/containerd/releases/download/v$containerdVersion/containerd-$containerdVersion-linux-amd64.tar.gz 2>&1
-    tar Czxvf $CONTAINERD_TMP $CONTAINERD_TMP/containerd-$containerdVersion-linux-amd64.tar.gz
-    mv $CONTAINERD_TMP/bin/* /usr/local/bin/
+    # Télécharger containerd
+    if [ "${HAS_CURL}" == "true" ]; then
+        curl -SsL "$CONTAINERD_DOWNLOAD_URL" -o "$CONTAINERD_TMP_ROOT/$CONTAINERD_DIST"
+    elif [ "${HAS_WGET}" == "true" ]; then
+        wget -q -O "$CONTAINERD_TMP_ROOT/$CONTAINERD_DIST" "$CONTAINERD_DOWNLOAD_URL"
+    fi
 
-    wget -q -P $CONTAINERD_TMP https://raw.githubusercontent.com/containerd/containerd/main/containerd.service 2>&1
-    mv "$CONTAINERD_TMP/containerd.service" /usr/lib/systemd/system/
-    chown root:root /usr/lib/systemd/system/containerd.service
-    restorecon /usr/lib/systemd/system/containerd.service
+    tar Czxvf $CONTAINERD_TMP_ROOT $CONTAINERD_TMP_ROOT/$CONTAINERD_DIST
+    mv $CONTAINERD_TMP_ROOT/bin/* /usr/local/bin/
+
+    # Télécharger le fichier service containerd
+    if [ "${HAS_CURL}" == "true" ]; then
+        curl -SsL "$CONTAINERD_SERVICE_DOWNLOAD_URL" -o "$CONTAINERD_TMP_ROOT/$CONTAINERD_SERVICE_DIST"
+    elif [ "${HAS_WGET}" == "true" ]; then
+        wget -q -O "$CONTAINERD_TMP_ROOT/$CONTAINERD_SERVICE_DIST" "$CONTAINERD_SERVICE_DOWNLOAD_URL"
+    fi
+
+    mv "$CONTAINERD_TMP_ROOT/$CONTAINERD_SERVICE_DIST" /usr/lib/systemd/system/
+    chown root:root /usr/lib/systemd/system/$CONTAINERD_SERVICE_DIST
+    restorecon /usr/lib/systemd/system/$CONTAINERD_SERVICE_DIST
     systemctl daemon-reload
     systemctl enable --now containerd
 
@@ -140,30 +160,27 @@ setupContainerd() {
 }
 
 # Installation des packages du nfs client
-setupNFSClient() {
-    echo -e "\nInstallation du client NFS en cours...\n"
-
+setup_nfs_client() {
     dnf -q install -y nfs-utils nfs4-acl-tools
 
     echo -e "\nInstallation du client NFS : OK\n"
 }
 
 # Installation des packages de kubernetes
-setupKubernetes() {
-    echo -e "\nInstallation de kubernetes en cours...\n"
+setup_kubernetes() {
+    readonly REPO_K8S_VERSION="${k8s_version%.*}"
 
-    repok8sVersion="${k8sVersion%.*}"
     cat <<EOF | tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
-baseurl=https://pkgs.k8s.io/core:/stable:/v$repok8sVersion/rpm/
+baseurl=https://pkgs.k8s.io/core:/stable:/v$REPO_K8S_VERSION/rpm/
 enabled=1
 gpgcheck=1
-gpgkey=https://pkgs.k8s.io/core:/stable:/v$repok8sVersion/rpm/repodata/repomd.xml.key
+gpgkey=https://pkgs.k8s.io/core:/stable:/v$REPO_K8S_VERSION/rpm/repodata/repomd.xml.key
 exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
 EOF
 
-    dnf -q install -y kubelet-$k8sVersion kubeadm-$k8sVersion kubectl-$k8sVersion --disableexcludes=kubernetes
+    dnf -q install -y kubelet-$k8s_version kubeadm-$k8s_version kubectl-$k8s_version --disableexcludes=kubernetes
     systemctl enable --now kubelet
 
     cat <<EOF | tee /etc/crictl.yaml
@@ -182,8 +199,8 @@ cleanup() {
   fi
 }
 
-# failTrap est exécuté si une erreur se produit.
-failTrap() {
+# fail_trap est exécuté si une erreur se produit.
+fail_trap() {
     local result=$?
 
     if [ "$result" != "0" ]; then
@@ -198,16 +215,16 @@ failTrap() {
 # Execution
 
 # Arrêter l'exécution en cas d'erreur
-trap "failTrap" EXIT
+trap "fail_trap" EXIT
 set -e
 
-checkIfRoot
+check_if_root
 
 # Traitement des options avec getopts
 while getopts ":h-:" opt; do
     case ${opt} in
         h)
-          displayHelp
+          display_help
           exit 0
           ;;
         -)
@@ -219,13 +236,13 @@ while getopts ":h-:" opt; do
                   hostfile="${OPTARG#*=}"
                   ;;
                 k8s-version=*)
-                  k8sVersion="${OPTARG#*=}"
+                  k8s_version="${OPTARG#*=}"
                   ;;
                 containerd-version=*)
-                  containerdVersion="${OPTARG#*=}"
+                  containerd_version="${OPTARG#*=}"
                   ;;
                 help)
-                  displayHelp
+                  display_help
                   exit 0
                   ;;
                 *)
@@ -242,11 +259,12 @@ while getopts ":h-:" opt; do
 done
 shift $((OPTIND -1))
 
-verifyOptions
-setupSystem
-setupContainerd
-setupNFSClient
-setupKubernetes
+check_dependency
+verify_options
+setup_system
+setup_containerd
+setup_nfs_client
+setup_kubernetes
 cleanup
 
 echo -e "\nConfiguration de base : OK\n"
