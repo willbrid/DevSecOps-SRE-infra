@@ -259,8 +259,8 @@ while getopts ":h-:" opt; do
 done
 shift $((OPTIND -1))
 
-check_dependency
 verify_options
+check_dependency
 setup_system
 setup_containerd
 setup_nfs_client
