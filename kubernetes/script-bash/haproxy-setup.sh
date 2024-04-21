@@ -20,6 +20,7 @@ version="$default_version"
 readonly VERSION_VALIDATION="^2\.[6-9]\.[0-50]+$"
 readonly HAS_CURL="$(type "curl" &> /dev/null && echo true || echo false)"
 readonly HAS_WGET="$(type "wget" &> /dev/null && echo true || echo false)"
+readonly HAPROXY_EXEC_FILE="/usr/local/sbin/haproxy"
 
 # Vérification de l'exécution en mode root
 check_if_root() {
@@ -77,7 +78,7 @@ install_haproxy() {
     make -C $HAPROXY_TMP_ROOT/$HAPROXY_DIST_NAME TARGET=linux-glibc USE_LUA=1 USE_OPENSSL=1 USE_PCRE=1 USE_ZLIB=1 USE_SYSTEMD=1 USE_PROMEX=1 > /dev/null
     make -C $HAPROXY_TMP_ROOT/$HAPROXY_DIST_NAME install-bin > /dev/null
 
-    if ! command -v /usr/local/sbin/haproxy &> /dev/null; then
+    if ! command -v $HAPROXY_EXEC_FILE &> /dev/null; then
         exit 1
     fi
 
@@ -130,7 +131,7 @@ After=syslog.target network.target
 
 [Service]
 Type=notify
-ExecStart=/usr/local/sbin/haproxy -f $HAPROXY_CONFIG_FILE -p /var/run/haproxy.pid -Ws
+ExecStart=$HAPROXY_EXEC_FILE -f $HAPROXY_CONFIG_FILE -p /var/run/haproxy.pid -Ws
 ExecReload=/bin/kill -USR2 \$MAINPID
 ExecStop=/bin/kill -USR1 \$MAINPID
 
