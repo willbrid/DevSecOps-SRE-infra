@@ -62,10 +62,10 @@ setup_prerequisites() {
 }
 
 install_haproxy() {
-    MAJOR_VERSION="${version%.*}"
-    HAPROXY_DIST="haproxy-$version.tar.gz"
-    HAPROXY_TMP_ROOT="$(mktemp -dt haproxy-installer-XXXXXXX)"
-    DOWNLOAD_URL="https://www.haproxy.org/download/$MAJOR_VERSION/src/$HAPROXY_DIST"
+    readonly MAJOR_VERSION="${version%.*}"
+    readonly HAPROXY_DIST="haproxy-$version.tar.gz"
+    readonly HAPROXY_TMP_ROOT="$(mktemp -dt haproxy-installer-XXXXXXX)"
+    readonly DOWNLOAD_URL="https://www.haproxy.org/download/$MAJOR_VERSION/src/$HAPROXY_DIST"
     
     if [ "${HAS_CURL}" == "true" ]; then
         curl -SsL "$DOWNLOAD_URL" -o "$HAPROXY_TMP_ROOT/$HAPROXY_DIST"
