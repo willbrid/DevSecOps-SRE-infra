@@ -14,21 +14,20 @@
 #   --pod-network      Plage du réseau du cluster (valeur par défaut = 172.16.0.0/16)
 
 # Initialisation des variables
-HAS_KUBEADM="$(type "kubeadm" &> /dev/null && echo true || echo false)"
-HAS_KUBECTL="$(type "kubectl" &> /dev/null && echo true || echo false)"
-HAS_KUBELET="$(type "kubelet" &> /dev/null && echo true || echo false)"
-HAS_CONTAINERD="$(type "/usr/local/bin/containerd" &> /dev/null && echo true || echo false)"
+default_pod_network="172.16.0.0/16"
+pod_network="$default_pod_network"
+api_server_ip=""
+api_server_pod_running=false
 
-defaultPodnetwork="172.16.0.0/16"
-podnetwork="$defaultPodnetwork"
-validationPodnetwork=""
-apiServerIP=""
-validationApiServerIP=""
-apiServerPodRunning=false
-k8sVersion=""
+readonly HAS_KUBEADM="$(type "kubeadm" &> /dev/null && echo true || echo false)"
+readonly HAS_KUBECTL="$(type "kubectl" &> /dev/null && echo true || echo false)"
+readonly HAS_KUBELET="$(type "kubelet" &> /dev/null && echo true || echo false)"
+readonly HAS_CONTAINERD="$(type "/usr/local/bin/containerd" &> /dev/null && echo true || echo false)"
+readonly VALIDATION_API_SERVER_IP="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
+readonly VALIDATION_POD_NETWORK="^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$"
 
 # Vérification de l'exécution en mode root
-checkIfRoot() {
+check_if_root() {
     if [ "$EUID" -ne 0 ]; then
         echo "Ce script doit être exécuté en tant que root."
         exit 1
@@ -36,48 +35,46 @@ checkIfRoot() {
 }
 
 # Définition de la fonction d'aide
-displayHelp() {
+display_help() {
     echo "Usage: $0 [options]"
     echo "Options:"
     echo "  -h, --help         Afficher cette aide"
     echo "  --api-server-ip    L'adresse IP sur laquelle le serveur API écoutera (Elle doit être l'adresse IP du serveur master)"
-    echo "  --pod-network      Plage du réseau du cluster (valeur par défaut = $defaultPodnetwork)"
+    echo "  --pod-network      Plage du réseau du cluster (valeur par défaut = $default_pod_network)"
 }
 
-checkApiserverPodStatus() {
+check_api_server_pod_status() {
     local status
     local hostname=$(cat /etc/hostname)
     status=$(kubectl get pod --no-headers kube-apiserver-$hostname -n kube-system -o custom-columns=CONTAINER:.status.phase)
     if [ "$status" = "Running" ]; then
-        apiServerPodRunning=true
+        api_server_pod_running=true
     else
         sleep 5
     fi
 }
 
 # Vérification des options entrées
-verifyOptions() {
-    if [[ -z $apiServerIP ]]; then
+verify_options() {
+    if [[ -z $api_server_ip ]]; then
         echo "L'option --api-server-ip est obligatoire."
-        displayHelp
+        display_help
+        exit 1
+    fi
+    
+    if ! [[ $api_server_ip =~ $VALIDATION_API_SERVER_IP ]]; then
+        echo "Erreur: $api_server_ip n'est pas sous le format d'adresse ipv4 (ex: 192.168.56.1)."
         exit 1
     fi
 
-    validationApiServerIP="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
-    if ! [[ $apiServerIP =~ $validationApiServerIP ]]; then
-        echo "Erreur: $apiServerIP n'est pas sous le format d'adresse ipv4 (ex: 192.168.56.1)."
-        exit 1
-    fi
-
-    validationPodnetwork="^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$"
-    if ! [[ $podnetwork =~ $validationPodnetwork ]]; then
-        echo "Erreur: $podnetwork n'est pas sous le format cidr (ex: $defaultPodnetwork)."
+    if ! [[ $pod_network =~ $VALIDATION_POD_NETWORK ]]; then
+        echo "Erreur: $pod_network n'est pas sous le format cidr (ex: $default_pod_network)."
         exit 1
     fi
 }
 
 # Vérification de la présence des packages kubeadm, kubelet, kubectl et containerd
-checkDependency() {
+check_dependency() {
     if [ "$HAS_KUBEADM" != "true" ] || [ "$HAS_KUBECTL" != "true" ] || [ "$HAS_KUBELET" != "true" ] || [ "$HAS_CONTAINERD" != "true" ] ; then
         echo "Veuillez installer les packages kubeadm, kubelet, kubectl et containerd pour exécuter ce script. Veuillez utiliser le script common-setup.sh"
         exit 1
@@ -85,21 +82,19 @@ checkDependency() {
 }
 
 # Initialisation du cluster kubernetes
-initCluster() {
-    echo -e "\nInitialisation du cluster kubernetes en cours...\n"
-
+init_cluster() {
     firewall-cmd --permanent --add-port={6443,2379-2380,10250,10251,10252}/tcp
     firewall-cmd --reload
 
-    k8sVersion=$(echo "$(kubelet --version)" | grep -oP '\d+\.\d+\.\d+')
-    kubeadm init --pod-network-cidr $podnetwork --apiserver-advertise-address $apiServerIP --kubernetes-version $k8sVersion
+    readonly k8S_VERSION=$(echo "$(kubelet --version)" | grep -oP '\d+\.\d+\.\d+')
+    kubeadm init --pod-network-cidr $pod_network --apiserver-advertise-address $api_server_ip --kubernetes-version $k8S_VERSION
    
     mkdir -p /root/.kube
     cp -i /etc/kubernetes/admin.conf /root/.kube/config
     chown $(id -u):$(id -g) /root/.kube/config
 
-    while ! $apiServerPodRunning; do
-        checkApiserverPodStatus
+    while ! $api_server_pod_running; do
+        check_api_server_pod_status
     done
 
     kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
@@ -109,8 +104,8 @@ initCluster() {
     echo -e "\nInitialisation du cluster kubernetes : OK\n"
 }
 
-# failTrap est exécuté si une erreur se produit.
-failTrap() {
+# fail_trap est exécuté si une erreur se produit.
+fail_trap() {
     local result=$?
     
     if [ "$result" != "0" ]; then
@@ -124,28 +119,28 @@ failTrap() {
 # Execution
 
 # Arrêter l'exécution en cas d'erreur
-trap "failTrap" EXIT
+trap "fail_trap" EXIT
 set -e
 
-checkIfRoot
+check_if_root
 
 # Traitement des options avec getopts
 while getopts ":h-:" opt; do
     case ${opt} in
         h)
-          displayHelp
+          display_help
           exit 0
           ;;
         -)
             case "${OPTARG}" in
                 api-server-ip=*)
-                  apiServerIP="${OPTARG#*=}"
+                  api_server_ip="${OPTARG#*=}"
                   ;;
                 pod-network=*)
-                  podnetwork="${OPTARG#*=}"
+                  pod_network="${OPTARG#*=}"
                   ;;
                 help)
-                  displayHelp
+                  display_help
                   exit 0
                   ;;
                 *)
@@ -162,8 +157,8 @@ while getopts ":h-:" opt; do
 done
 shift $((OPTIND -1))
 
-verifyOptions
-checkDependency
-initCluster
+verify_options
+check_dependency
+init_cluster
 
 echo -e "\nConfiguration du noeud master : OK\n"
