@@ -122,7 +122,8 @@ setup_containerd() {
         source $usr_local_bin_path_setting
     fi
 
-    readonly CONTAINERD_DIST="containerd-$containerd_version-linux-amd64.tar.gz"
+    readonly CONTAINERD_DIST_NAME="containerd-$containerd_version-linux-amd64"
+    readonly CONTAINERD_DIST="$CONTAINERD_DIST_NAME.tar.gz"
     readonly CONTAINERD_TMP_ROOT="$(mktemp -dt containerd-installer-XXXXXXX)"
     readonly CONTAINERD_DOWNLOAD_URL="https://github.com/containerd/containerd/releases/download/v$containerd_version/$CONTAINERD_DIST"
     readonly CONTAINERD_SERVICE_DIST="containerd.service"
@@ -136,7 +137,7 @@ setup_containerd() {
     fi
 
     tar Czxvf $CONTAINERD_TMP_ROOT $CONTAINERD_TMP_ROOT/$CONTAINERD_DIST
-    mv $CONTAINERD_TMP_ROOT/bin/* /usr/local/bin/
+    mv $CONTAINERD_TMP_ROOT/$CONTAINERD_DIST_NAME/bin/* /usr/local/bin/
 
     # Télécharger le fichier service containerd
     if [ "${HAS_CURL}" == "true" ]; then
