@@ -279,6 +279,82 @@ kubectl get pods -n ingress-nginx
 kubectl get svc -n ingress-nginx
 ```
 
+### Mise en place d'un load balanceur Haproxy depuis notre noeud lb-srv
+
+- Installation de notre load balanceur Haproxy (version 2.8.9)
+
+```
+git clone https://github.com/willbrid/DevSecOps-SRE-infra.git
+```
+
+```
+cd DevSecOps-SRE-infra/kubernetes/script-bash
+```
+
+```
+chmod +x haproxy-setup.sh
+```
+
+```
+sudo ./haproxy-setup.sh --version=2.8.9
+```
+
+- Configuration du load balanceur
+
+```
+sudo vi /etc/haproxy/haproxy.cfg 
+```
+
+```
+...
+...
+# Frontend pour http dans tcp
+frontend http_in_tcp
+  bind *:80
+  default_backend http-server
+
+# Backend pour http dans tcp
+backend http-server
+  mode tcp
+  balance roundrobin
+  server http-server-worker1 192.168.56.201:30897 check
+  server http-server-worker2 192.168.56.202:30897 check
+
+# Frontend pour https dans tcp
+frontend https_in_tcp
+  bind *:443
+  default_backend https-server
+
+# Backend pour https dans tcp
+backend https-server
+  mode tcp
+  balance roundrobin
+  server https-server-worker1 192.168.56.201:32374 check
+  server https-server-worker2 192.168.56.202:32374 check
+```
+
+Les ports **30897** et **32374** sont respectivement les ports du service **ingress-nginx-controller** de type **LoadBalancer** qui correspondent respectivement au port **80** et **443** de **nginx** du deploiement **ingress-nginx-controller**.
+
+Nous pouvons vérifier que notre fichier de configuration est correcte.
+
+```
+/usr/local/sbin/haproxy -c -f /etc/haproxy/haproxy.cfg
+```
+
+Nous autorisons les ports **80** et **443** depuis **firewalld**
+
+```
+sudo firewall-cmd --permanent --add-port=80/tcp --add-port=443/tcp
+sudo firewall-cmd --reload
+```
+
+Nous redémarrons et vérifions le statut du service haproxy
+
+```
+sudo systemctl restart haproxy
+sudo systemctl status haproxy
+```
+
 ### Référence
 
 - [Kubernetes Documentation](https://kubernetes.io/docs/home/)
