@@ -309,7 +309,7 @@ sudo vi /etc/haproxy/haproxy.cfg
 ...
 ...
 # Frontend pour http dans tcp
-frontend http_in_tcp
+frontend http-in-tcp
   bind *:80
   default_backend http-server
 
@@ -321,7 +321,7 @@ backend http-server
   server http-server-worker2 192.168.56.202:30897 check
 
 # Frontend pour https dans tcp
-frontend https_in_tcp
+frontend https-in-tcp
   bind *:443
   default_backend https-server
 
