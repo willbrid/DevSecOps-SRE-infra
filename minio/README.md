@@ -16,7 +16,7 @@ Nous clonons le référentiel github **DevSecOps-SRE-infra**
 git clone https://github.com/willbrid/DevSecOps-SRE-infra.git
 ```
 
-- Installtion en mode non HA
+- Installation en mode non HA
 
 ```
 cd DevSecOps-SRE-infra/minio/k8s-manifest/mode-non-ha
@@ -26,7 +26,7 @@ cd DevSecOps-SRE-infra/minio/k8s-manifest/mode-non-ha
 kubectl apply -f *.yaml
 ```
 
-- Installtion en mode HA
+- Installation en mode HA
 
 ```
 cd DevSecOps-SRE-infra/minio/k8s-manifest/mode-ha
