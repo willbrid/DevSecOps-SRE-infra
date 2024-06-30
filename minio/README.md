@@ -4,19 +4,39 @@ MinIO est un serveur de stockage objet open source, compatible avec l'API Amazon
 
 ### Installation sur k8s depuis le noeud master
 
+Au préalable nous créons l'espace de nom **minio**
+
+```
+kubectl create sa minio
+```
+
+Nous clonons le référentiel github **DevSecOps-SRE-infra**
+
 ```
 git clone https://github.com/willbrid/DevSecOps-SRE-infra.git
 ```
 
+- Installtion en mode non HA
+
 ```
-cd DevSecOps-SRE-infra/minio/k8s-manifest
+cd DevSecOps-SRE-infra/minio/k8s-manifest/mode-non-ha
 ```
 
 ```
 kubectl apply -f *.yaml
 ```
 
-Nous accédons à l'interface via le lien : **https://minio-storage.willbrid.com** .
+- Installtion en mode HA
+
+```
+cd DevSecOps-SRE-infra/minio/k8s-manifest/mode-ha
+```
+
+```
+kubectl apply -f *.yaml
+```
+
+L'installation va créer un lien d'accès **https://minio-storage.willbrid.com** via lequel nous accédons à l'interface web.
 
 ### Référence
 
