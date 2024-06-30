@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio-storage
+  namespace: minio
+  labels:
+    app: minio-storage
+spec:
+  serviceName: minio-storage-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: minio-storage
+  template:
+    metadata:
+      labels:
+        app: minio-storage
+    spec:
+      containers:
+        - name: minio-storage
+          image: 'quay.io/minio/minio:RELEASE.2023-06-09T07-32-12Z.fips'
+          command:
+          - /bin/bash
+          - -c
+          args:
+          - minio 
+          - server 
+          - http://minio-storage-0.minio-storage-headless.minio.svc.cluster.local/data
+          - http://minio-storage-1.minio-storage-headless.minio.svc.cluster.local/data
+          - http://minio-storage-2.minio-storage-headless.minio.svc.cluster.local/data
+          - --console-address 
+          - :9090
+          ports:
+          - name: http-svc
+            containerPort: 9000
+            protocol: TCP
+          - name: http-console
+            containerPort: 9090
+            protocol: TCP  
+          envFrom:
+          - configMapRef:
+              name: minio-storage
+          - secretRef:
+              name: minio-storage
+          resources:
+            limits:
+              cpu: '500m'
+              memory: 1Gi
+            requests:
+              cpu: '50m'
+              memory: 100Mi
+          volumeMounts:
+            - name: minio-storage
+              mountPath: /data
+          imagePullPolicy: IfNotPresent
+  volumeClaimTemplates:
+  - metadata:
+      name: minio-storage
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: nfs-client
+      resources:
+        requests:
+          storage: 5Gi 

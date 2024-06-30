@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-storage
+  namespace: minio
+  labels:
+    app: minio-storage
+spec:
+  tls:
+  - hosts:
+    - minio-storage.willbrid.com # Un domaine wildcard *.willbrid.com sera créé dans ce référentiel.
+    - minio-storage-file.willbrid.com
+    secretName: willbridcom # Un secret tls pour ce domaine *.willbrid.com sera créé dans ce référentiel.
+  rules:
+  - host: minio-storage.willbrid.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: minio-storage
+            port:
+              number: 9090
+  - host: minio-storage-file.willbrid.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: minio-storage
+            port:
+              number: 9000

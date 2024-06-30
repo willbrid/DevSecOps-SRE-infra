@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-storage-headless
+  namespace: minio
+  labels:
+    app: minio-storage
+spec:
+  clusterIP: None
+  ports:
+  - name: http-svc
+    protocol: TCP
+    port: 9000
+    targetPort: http-svc
+  selector:
+    app: minio-storage 
