@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio-storage
+  namespace: minio
+  labels:
+    app: minio-storage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio-storage
+  template:
+    metadata:
+      labels:
+        app: minio-storage
+    spec:
+      volumes:
+      - name: minio-storage
+        persistentVolumeClaim:
+          claimName: minio-storage
+      containers:
+        - name: minio-storage
+          image: 'quay.io/minio/minio:RELEASE.2023-06-09T07-32-12Z.fips'
+          command:
+          - /bin/bash
+          - -c
+          args:
+          - minio server /data --console-address :9090
+          ports:
+          - name: http-svc
+            containerPort: 9000
+            protocol: TCP
+          - name: http-console
+            containerPort: 9090
+            protocol: TCP  
+          envFrom:
+          - configMapRef:
+              name: minio-storage
+          - secretRef:
+              name: minio-storage
+          resources:
+            limits:
+              cpu: '500m'
+              memory: 1Gi
+            requests:
+              cpu: '50m'
+              memory: 100Mi
+          volumeMounts:
+            - name: minio-storage
+              mountPath: /data
+          imagePullPolicy: IfNotPresent
