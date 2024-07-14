@@ -10,7 +10,7 @@ Au préalable nous créons l'espace de nom **minio**
 kubectl create sa minio
 ```
 
-Nous clonons le référentiel github **DevSecOps-SRE-infra**
+Nous clonons le référentiel github **willbrid/DevSecOps-SRE-infra**
 
 ```
 git clone https://github.com/willbrid/DevSecOps-SRE-infra.git
