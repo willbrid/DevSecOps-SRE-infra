@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-store
+  labels:
+    app: redis-store
+spec:
+  serviceName: redis-store-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-store
+  template:
+    metadata:
+      labels:
+        app: redis-store
+    spec:
+      containers:
+      - name: redis-store
+        image: redis:7.0.10-alpine
+        command: ["redis-server"]
+        args: ["/etc/redis/redis.conf"]
+        ports:
+        - name: redis-store
+          containerPort: 6379
+          protocol: TCP
+        volumeMounts:
+        - name: redis-store-data
+          mountPath: /data
+        - name: redis-store-config
+          mountPath: /etc/redis/redis.conf
+          subPath: redis.conf
+      volumes:
+      - name: redis-store-config
+        configMap:
+          name: redis-store
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-store-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: nfs-client
+      resources:
+        requests:
+          storage: 5Gi
