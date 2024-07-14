@@ -11,3 +11,19 @@ Voici quelques-uns des utilitaires inclus dans Netshoot :
 - **Nmap** : Pour scanner les ports et découvrir les services réseau sur une machine.
 - **Curl** : Pour transférer des données à partir ou vers un serveur.
 - **Ip** et **Iptables** : Pour gérer les adresses IP et les règles de pare-feu.
+
+### Installation sous k8s depuis le noeud master
+
+Nous clonons le référentiel github **willbrid/DevSecOps-SRE-infra**
+
+```
+cd $HOME && git clone https://github.com/willbrid/DevSecOps-SRE-infra.git
+```
+
+```
+cd DevSecOps-SRE-infra/netshoot/k8s-manifest
+```
+
+```
+kubectl apply -f deployment.yaml
+```
