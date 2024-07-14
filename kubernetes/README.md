@@ -355,6 +355,42 @@ sudo systemctl restart haproxy
 sudo systemctl status haproxy
 ```
 
+### Création du secret tls willbridcom depuis notre noeud master dans tous les espaces de noms de notre cluster
+
+Nous créons un secret tls **willbridcom** à partir de notre certificat **willbrid.com.crt** et notre clé privée **willbrid.com.key**.
+
+```
+cd $HOME && git clone https://github.com/willbrid/DevSecOps-SRE-infra.git
+```
+
+```
+vi create-tls-secret.sh 
+```
+
+```
+#!/bin/bash
+
+SECRET_NAME="willbridcom"
+
+CERT_FILE="$HOME/DevSecOps-SRE-infra/tls/willbrid.com.crt"
+KEY_FILE="$HOME/DevSecOps-SRE-infra/tls/willbrid.com.key"
+
+namespaces=$(kubectl get namespaces -o jsonpath='{.items[*].metadata.name}')
+
+for ns in $namespaces; do
+  echo "creating secret in namespace: $ns"
+  kubectl create secret tls $SECRET_NAME --cert=$CERT_FILE --key=$KEY_FILE -n $ns
+done
+```
+
+```
+chmod +x create-tls-secret.sh
+```
+
+```
+./create-tls-secret.sh
+```
+
 ### Référence
 
 - [Kubernetes Documentation](https://kubernetes.io/docs/home/)
