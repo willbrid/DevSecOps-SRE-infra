@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+  namespace: mongodb
+  labels:
+    app: mongodb
+spec:
+  selector:
+    matchLabels:
+      app: mongodb
+  serviceName: "mongodb-headless"
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: mongodb
+        image: mongo:7.0.6
+        args:
+        - "--replSet"
+        - "rs0"
+        - "--keyFile"
+        - "/etc/mongodb-keyfile"
+        - "--bind_ip_all"
+        ports:
+        - name: tcp-port
+          containerPort: 27017
+          protocol: TCP
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongodb
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongodb
+              key: password
+        - name: MONGO_INITDB_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mongodb
+              key: database
+        resources:
+          limits:
+            cpu: '500m'
+            memory: 1Gi
+          requests:
+            cpu: '50m'
+            memory: 100Mi
+        volumeMounts:
+        - name: mongodb
+          mountPath: /data/db
+        - name: keyfile
+          mountPath: /etc/mongodb-keyfile
+          subPath: mongodb-keyfile
+          readOnly: true
+      volumes:
+      - name: keyfile
+        secret:
+          secretName: mongodb-keyfile
+          defaultMode: 0400
+  volumeClaimTemplates:
+    - metadata:
+        name: mongodb
+      spec:
+        storageClassName: nfs-client
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
