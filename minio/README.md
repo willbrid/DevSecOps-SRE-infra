@@ -7,7 +7,7 @@ MinIO est un serveur de stockage objet open source, compatible avec l'API Amazon
 Au préalable nous créons l'espace de nom **minio**
 
 ```
-kubectl create sa minio
+kubectl create namespace minio
 ```
 
 Nous clonons le référentiel github **willbrid/DevSecOps-SRE-infra**

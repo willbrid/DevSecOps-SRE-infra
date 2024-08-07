@@ -7,7 +7,7 @@
 Au préalable nous créons l'espace de nom **mongodb**
 
 ```
-kubectl create sa mongodb
+kubectl create namespace mongodb
 ```
 
 Nous clonons le référentiel github willbrid/DevSecOps-SRE-infra

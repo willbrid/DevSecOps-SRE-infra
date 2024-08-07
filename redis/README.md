@@ -4,6 +4,12 @@
 
 ### Installation sous k8s depuis le noeud master
 
+Au préalable nous créons l'espace de nom **redis**
+
+```
+kubectl create namespace redis
+```
+
 Nous clonons le référentiel github **willbrid/DevSecOps-SRE-infra**
 
 ```
