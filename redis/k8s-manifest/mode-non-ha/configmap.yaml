@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: redis-store
+  namespace: redis
   labels:
     app: redis-store
 data:
