@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana
+  namespace: grafana
+  labels:
+    app: grafana
+data:
+  GF_INSTALL_PLUGINS: "grafana-clock-panel,grafana-simple-json-datasource,yesoreyeram-infinity-datasource"
+  GF_SERVER_ROOT_URL: "https://grafana.willbrid.com"

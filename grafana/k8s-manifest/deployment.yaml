@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: grafana
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      serviceAccountName: default
+      securityContext:
+        fsGroup: 0
+      containers:
+        - name: grafana
+          image: "grafana/grafana-oss:10.4.6"
+          imagePullPolicy: IfNotPresent
+          ports:
+          - name: http-port
+            containerPort: 3000
+            protocol: TCP
+          envFrom:
+          - configMapRef:
+              name: grafana
+          - secretRef:
+              name: grafana
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 3000
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /robots.txt
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 2
+          volumeMounts:
+          - name: grafana
+            mountPath: /var/lib/grafana
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 500Mi
+      volumes:
+      - name: grafana
+        persistentVolumeClaim:
+          claimName: grafana
