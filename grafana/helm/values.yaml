@@ -1,0 +1,96 @@
+replicaCount: 1
+
+image:
+  repository: grafana/grafana-oss
+  pullPolicy: IfNotPresent
+  tag: "10.4.6"
+
+imagePullSecrets: []
+nameOverride: "grafana"
+fullnameOverride: "grafana"
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 0
+
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 3000
+  portname: http-port
+
+ingress:
+  enabled: true
+  className: ""
+  annotations: {}
+  hosts:
+  - host: grafana.willbrid.com
+    paths:
+    - path: /
+      pathType: Prefix
+  tls:
+  - secretName: willbridcom
+    hosts:
+    - grafana.willbrid.com
+
+secret:
+  GF_SECURITY_ADMIN_USER: admin
+  GF_SECURITY_ADMIN_PASSWORD: test@test
+
+configmap:
+  GF_SERVER_ROOT_URL: "https://grafana.willbrid.com"
+  GF_INSTALL_PLUGINS: "grafana-clock-panel,grafana-simple-json-datasource,yesoreyeram-infinity-datasource"
+
+pvc:
+  storageSize: 10Gi
+  storageClass: nfs-client
+  accessModes:
+  - ReadWriteOnce
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 500Mi
+
+livenessProbe:
+  failureThreshold: 3
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  successThreshold: 1
+  tcpSocket:
+    port: 3000
+  timeoutSeconds: 1
+
+readinessProbe:
+  failureThreshold: 3
+  httpGet:
+    path: /robots.txt
+    port: 3000
+    scheme: HTTP
+  initialDelaySeconds: 20
+  periodSeconds: 15
+  successThreshold: 1
+  timeoutSeconds: 2
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

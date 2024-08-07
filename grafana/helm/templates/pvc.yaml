@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "grafana.fullname" . }}
+  labels:
+    {{- include "grafana.labels" . | nindent 4 }}
+spec:
+  accessModes:
+  {{- range .Values.pvc.accessModes  }}
+  - {{ . | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.pvc.storageSize }}
+  storageClassName: {{ .Values.pvc.storageClass }}
+  volumeMode: Filesystem
