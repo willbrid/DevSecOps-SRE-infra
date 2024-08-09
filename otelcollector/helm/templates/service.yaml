@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "otelcollector.fullname" . }}
+  labels:
+    {{- include "otelcollector.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  - port: {{ .Values.service.otlpGRPC.port }}
+    targetPort: {{ .Values.service.otlpGRPC.name }}
+    protocol: {{ .Values.service.otlpGRPC.protocol }}
+    name: {{ .Values.service.otlpGRPC.name }}
+  - port: {{ .Values.service.otlpHTTP.port }}
+    targetPort: {{ .Values.service.otlpHTTP.name }}
+    protocol: {{ .Values.service.otlpHTTP.protocol }}
+    name: {{ .Values.service.otlpHTTP.name }}
+  - port: {{ .Values.service.metricHTTP.port }}
+    targetPort: {{ .Values.service.metricHTTP.name }}
+    protocol: {{ .Values.service.metricHTTP.protocol }}
+    name: {{ .Values.service.metricHTTP.name }}
+  - port: {{ .Values.service.promHTTP.port }}
+    targetPort: {{ .Values.service.promHTTP.name }}
+    protocol: {{ .Values.service.promHTTP.protocol }}
+    name: {{ .Values.service.promHTTP.name }}
+  selector:
+    {{- include "otelcollector.selectorLabels" . | nindent 4 }}

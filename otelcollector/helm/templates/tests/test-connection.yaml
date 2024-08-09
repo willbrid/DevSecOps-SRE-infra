@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "otelcollector.fullname" . }}-test-connection"
+  labels:
+    {{- include "otelcollector.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ include "otelcollector.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never

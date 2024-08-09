@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "otelcollector.fullname" . }}
+  labels:
+    {{- include "otelcollector.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "otelcollector.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "otelcollector.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "otelcollector.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+          - name: {{ .Values.service.otlpGRPC.name }}
+            containerPort: {{ .Values.service.otlpGRPC.port }}
+            protocol: {{ .Values.service.otlpGRPC.protocol }}
+          - name: {{ .Values.service.otlpHTTP.name }}
+            containerPort: {{ .Values.service.otlpHTTP.port }}
+            protocol: {{ .Values.service.otlpHTTP.protocol }}
+          - name: {{ .Values.service.metricHTTP.name }}
+            containerPort: {{ .Values.service.metricHTTP.port }}
+            protocol: {{ .Values.service.metricHTTP.protocol }}
+          - name: {{ .Values.service.promHTTP.name }}
+            containerPort: {{ .Values.service.promHTTP.port }}
+            protocol: {{ .Values.service.promHTTP.protocol }}
+          - name: {{ .Values.service.health.name }}
+            containerPort: {{ .Values.service.health.port }}
+            protocol: {{ .Values.service.health.protocol }}
+          env:
+          - name: MY_POD_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.service.health.path }}
+              port: {{ .Values.service.health.port }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.service.health.path }}
+              port: {{ .Values.service.health.port }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+          - name: {{ include "otelcollector.fullname" . }}
+            mountPath: {{ .Values.configmap.mountPath }}
+            subPath: {{ .Values.configmap.subPath }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+      - name: {{ include "otelcollector.fullname" . }}
+        configMap:
+          name: {{ include "otelcollector.fullname" . }}
