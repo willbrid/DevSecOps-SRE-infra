@@ -22,9 +22,12 @@ Pour rendre un système **observable**, il doit être **instrumenté**. Autremen
 
 **OpenTelemetry Collector** offre une implémentation indépendante du fournisseur de la manière de recevoir, de traiter et d'exporter des données de télémétrie. Il élimine le besoin d'exécuter, d'exploiter et de maintenir plusieurs agents/collecteurs. Cela fonctionne avec une évolutivité améliorée et prend en charge les formats de données d'observabilité open source (par exemple, **Jaeger**, **Prometheus**, **Fluent Bit**, etc.) envoyés à un ou plusieurs backends open source ou commerciaux. L'**agent Collector local** est l'emplacement par défaut vers lequel les bibliothèques d'instrumentation exportent leurs données de télémétrie.
 
-### Installation d'OpenTelemetry Collector
+### Installation d'OpenTelemetry Collector sur k8s pour une intégration avec Prometheus
 
-Au préalable nous créons l'espace de nom **otelcollector**
+L'intégration d'**OpenTelemetry Collector** avec **Prometheus** permet de centraliser la collecte, la transformation et l'exportation des métriques générées par nos applications. **OpenTelemetry Collector** agit comme un intermédiaire entre les applications instrumentées et **Prometheus**, facilitant ainsi la gestion des métriques dans des environnements distribués. Cette configuration permet à nos applications de pousser des métriques directement vers **OpenTelemetry Collector**, qui se charge ensuite de les mettre à disposition de **Prometheus** pour la surveillance et l'analyse. <br>
+L'intégration d'**OpenTelemetry Collector** avec **Prometheus** offre plusieurs avantages, tels que l'unification des points de collecte, la transformation des métriques en différents formats, et la simplification de l'architecture globale de surveillance.
+
+Pour son installation depuis le noeud master, nous créons au préalable l'espace de nom **otelcollector**
 
 ```
 kubectl create namespace otelcollector
