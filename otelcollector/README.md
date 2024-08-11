@@ -22,6 +22,40 @@ Pour rendre un système **observable**, il doit être **instrumenté**. Autremen
 
 **OpenTelemetry Collector** offre une implémentation indépendante du fournisseur de la manière de recevoir, de traiter et d'exporter des données de télémétrie. Il élimine le besoin d'exécuter, d'exploiter et de maintenir plusieurs agents/collecteurs. Cela fonctionne avec une évolutivité améliorée et prend en charge les formats de données d'observabilité open source (par exemple, **Jaeger**, **Prometheus**, **Fluent Bit**, etc.) envoyés à un ou plusieurs backends open source ou commerciaux. L'**agent Collector local** est l'emplacement par défaut vers lequel les bibliothèques d'instrumentation exportent leurs données de télémétrie.
 
+### Installation d'OpenTelemetry Collector
+
+Au préalable nous créons l'espace de nom **otelcollector**
+
+```
+kubectl create namespace otelcollector
+```
+
+Nous clonons le référentiel github **willbrid/DevSecOps-SRE-infra**
+
+```
+cd $HOME && git clone https://github.com/willbrid/DevSecOps-SRE-infra.git
+```
+
+- Installation avec Helm
+
+```
+cd DevSecOps-SRE-infra/otelcollector/helm
+```
+
+```
+helm install otelcollector . --namespace otelcollector 
+```
+
+- Installation avec les fichiers manifest
+
+```
+cd DevSecOps-SRE-infra/otelcollector/k8s-manifest
+```
+
+```
+kubectl apply -f *.yaml
+```
+
 ### Référence
 
 - [Opentelemetry Documentation](https://opentelemetry.io/docs)
