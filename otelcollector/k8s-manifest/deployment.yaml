@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otelcollector
+  namespace: otelcollector
+  labels:
+    app: otelcollector
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: otelcollector
+  template:
+    metadata:
+      labels:
+        app: otelcollector
+    spec:
+      serviceAccountName: default
+      containers:
+        - name: otelcollector
+          image: "otel/opentelemetry-collector-contrib:0.106.1"
+          imagePullPolicy: IfNotPresent
+          ports:
+          - name: otlp-grpc
+            containerPort: 4317
+            protocol: TCP
+          - name: otlp-http
+            containerPort: 4318
+            protocol: TCP
+          - name: metric-http
+            containerPort: 8889
+            protocol: TCP
+          - name: prom-http
+            containerPort: 8888
+            protocol: TCP
+          - name: health-http
+            containerPort: 13133
+            protocol: TCP
+          env:
+          - name: MY_POD_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+            requests:
+              cpu: 300m
+              memory: 512Mi
+          volumeMounts:
+          - name: otelcollector
+            mountPath: /etc/otelcol-contrib/config.yaml
+            subPath: config.yaml
+      volumes:
+      - name: otelcollector
+        configMap:
+          name: otelcollector

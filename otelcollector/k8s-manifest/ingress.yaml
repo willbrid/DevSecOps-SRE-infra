@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: otelcollector
+  namespace: otelcollector
+  labels:
+    app: otelcollector
+spec:
+  tls:
+    - hosts:
+        - "otelcol.willbrid.com"
+      secretName: willbridcom
+  rules:
+    - host: "otelcol.willbrid.com"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: otelcollector
+                port:
+                  number: 8889

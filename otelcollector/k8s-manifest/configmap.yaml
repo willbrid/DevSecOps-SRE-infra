@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otelcollector
+  namespace: otelcollector
+  labels:
+    app: otelcollector
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: ${env:MY_POD_IP}:4317
+          http:
+            endpoint: ${env:MY_POD_IP}:4318
+    processors:
+      batch:
+      memory_limiter:  
+        limit_mib: 1500  
+        spike_limit_mib: 512
+        check_interval: 5s
+    extensions:
+      health_check: {}
+    exporters:
+      prometheus:
+        endpoint: "0.0.0.0:8889"
+      prometheusremotewrite:
+        endpoint: "http://@promIP:9090/api/v1/write"
+        tls:
+          insecure: true
+    service:
+      extensions: [health_check]
+      pipelines:
+        metrics:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [prometheus,prometheusremotewrite]

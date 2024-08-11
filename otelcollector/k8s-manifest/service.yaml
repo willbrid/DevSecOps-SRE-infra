@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: otelcollector
+  namespace: otelcollector
+  labels:
+    app: otelcollector
+spec:
+  type: ClusterIP
+  ports:
+  - port: 4317
+    targetPort: otlp-grpc
+    protocol: TCP
+    name: otlp-grpc
+  - port: 4318
+    targetPort: otlp-http
+    protocol: TCP
+    name: otlp-http
+  - port: 8889
+    targetPort: metric-http
+    protocol: TCP
+    name: metric-http
+  - port: 8888
+    targetPort: prom-http
+    protocol: TCP
+    name: prom-http
+  selector:
+    app: otelcollector
