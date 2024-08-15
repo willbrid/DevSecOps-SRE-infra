@@ -22,7 +22,6 @@ api_server_pod_running=false
 readonly HAS_KUBEADM="$(type "kubeadm" &> /dev/null && echo true || echo false)"
 readonly HAS_KUBECTL="$(type "kubectl" &> /dev/null && echo true || echo false)"
 readonly HAS_KUBELET="$(type "kubelet" &> /dev/null && echo true || echo false)"
-readonly HAS_CONTAINERD="$(type "/usr/local/bin/containerd" &> /dev/null && echo true || echo false)"
 readonly VALIDATION_API_SERVER_IP="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
 readonly VALIDATION_POD_NETWORK="^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$"
 
@@ -73,17 +72,17 @@ verify_options() {
     fi
 }
 
-# Vérification de la présence des packages kubeadm, kubelet, kubectl et containerd
+# Vérification de la présence des packages kubeadm, kubelet et kubectl
 check_dependency() {
-    if [ "$HAS_KUBEADM" != "true" ] || [ "$HAS_KUBECTL" != "true" ] || [ "$HAS_KUBELET" != "true" ] || [ "$HAS_CONTAINERD" != "true" ] ; then
-        echo "Veuillez installer les packages kubeadm, kubelet, kubectl et containerd pour exécuter ce script. Veuillez utiliser le script common-setup.sh"
+    if [ "$HAS_KUBEADM" != "true" ] || [ "$HAS_KUBECTL" != "true" ] || [ "$HAS_KUBELET" != "true" ] ; then
+        echo "Veuillez installer les packages kubeadm, kubelet et kubectl pour exécuter ce script. Veuillez utiliser le script common-setup.sh"
         exit 1
     fi
 }
 
 # Initialisation du cluster kubernetes
 init_cluster() {
-    firewall-cmd --permanent --add-port={6443,2379-2380,10250,10251,10252}/tcp
+    firewall-cmd --permanent --add-port={6443,2379-2380,10250,10257,10259}/tcp
     firewall-cmd --reload
 
     readonly k8S_VERSION=$(echo "$(kubelet --version)" | grep -oP '\d+\.\d+\.\d+')
