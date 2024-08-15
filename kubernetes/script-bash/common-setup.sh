@@ -110,7 +110,7 @@ EOF
     dnf -q install -y cri-o --disableexcludes=cri-o
     systemctl enable --now crio.service
 
-    echo -e "\nInstallation et configuration de cri-o : OK\n"
+    echo -e "\nInstallation de cri-o : OK\n"
 }
 
 # Installation des packages du nfs client
