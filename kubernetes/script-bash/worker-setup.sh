@@ -12,7 +12,6 @@
 HAS_KUBEADM="$(type "kubeadm" &> /dev/null && echo true || echo false)"
 HAS_KUBECTL="$(type "kubectl" &> /dev/null && echo true || echo false)"
 HAS_KUBELET="$(type "kubelet" &> /dev/null && echo true || echo false)"
-HAS_CONTAINERD="$(type "/usr/local/bin/containerd" &> /dev/null && echo true || echo false)"
 
 join_file="/home/vagrant/shared/join-command.sh"
 
@@ -24,10 +23,10 @@ check_if_root() {
     fi
 }
 
-# Vérification de la présence des packages kubeadm, kubelet, kubectl et containerd
+# Vérification de la présence des packages kubeadm, kubelet et kubectl
 check_dependency() {
-    if [ "$HAS_KUBEADM" != "true" ] || [ "$HAS_KUBECTL" != "true" ] || [ "$HAS_KUBELET" != "true" ] || [ "$HAS_CONTAINERD" != "true" ] ; then
-        echo "Veuillez installer les packages kubeadm, kubelet, kubectl et containerd pour exécuter ce script. Veuillez utiliser le script common-setup.sh"
+    if [ "$HAS_KUBEADM" != "true" ] || [ "$HAS_KUBECTL" != "true" ] || [ "$HAS_KUBELET" != "true" ] ; then
+        echo "Veuillez installer les packages kubeadm, kubelet et kubectl pour exécuter ce script. Veuillez utiliser le script common-setup.sh"
         exit 1
     fi
 }
@@ -42,7 +41,7 @@ check_join_command() {
 
 # Ajout du noeud au cluster kubernetes
 join_worker_to_cluster() {
-    firewall-cmd --permanent --add-port={10250,30000-32767}/tcp
+    firewall-cmd --permanent --add-port={10250,10256,30000-32767}/tcp
     firewall-cmd --reload
 
     local join_command=$(<"$join_file")
