@@ -97,7 +97,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 end
 ```
 
-### Installation de k8s version 1.27
+### Installation de k8s version 1.30.4
 
 - Pour tous les 3 noeuds
 
@@ -117,19 +117,19 @@ chmod +x common-setup.sh
 --- Noeud master
 
 ```
-sudo ./common-setup.sh --hostname=control --hostfile=hosts --k8s-version=1.27.0
+sudo ./common-setup.sh --hostfile=hosts --k8s-version=1.30.4
 ```
 
 --- Noeud worker1
 
 ```
-sudo ./common-setup.sh --hostname=worker1 --hostfile=hosts --k8s-version=1.27.0
+sudo ./common-setup.sh --hostfile=hosts --k8s-version=1.30.4
 ```
 
 --- Noeud worker2
 
 ```
-sudo ./common-setup.sh --hostname=worker2 --hostfile=hosts --k8s-version=1.27.0
+sudo ./common-setup.sh --hostfile=hosts --k8s-version=1.30.4
 ```
 
 - Sur le noeud master
