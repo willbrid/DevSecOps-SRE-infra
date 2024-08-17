@@ -31,7 +31,7 @@ spec:
         fsGroup: 1000840000
       containers:
       - name: opensearch
-        image: 'opensearchproject/opensearch:2.16.0'
+        image: 'opensearchproject/opensearch:2.16.0' # Pour une utilisation avec Graylog il faudrait utiliser l'image opensearchproject/opensearch:2.12.0
         ports:
         - name: http-api 
           containerPort: 9200
