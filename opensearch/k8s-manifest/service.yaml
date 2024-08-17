@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: opensearch
+  namespace: opensearch
+  labels:
+    component: opensearch
+spec:
+  ports:
+    - name: http-api
+      protocol: TCP
+      port: 9200
+      targetPort: http-api
+    - name: http-com
+      protocol: TCP
+      port: 9300
+      targetPort: http-com
+  selector:
+    component: opensearch

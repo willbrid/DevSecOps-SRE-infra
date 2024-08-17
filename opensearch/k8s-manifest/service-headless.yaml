@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: opensearch-headless
+  namespace: opensearch
+  labels:
+    component: opensearch
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: http-api
+      protocol: TCP
+      port: 9200
+      targetPort: http-api
+    - name: http-search
+      protocol: TCP
+      port: 9250
+      targetPort: http-search
+    - name: http-com
+      protocol: TCP
+      port: 9300
+      targetPort: http-com
+    - name: http-perf
+      protocol: TCP
+      port: 9600
+      targetPort: http-perf
+  selector:
+    component: opensearch

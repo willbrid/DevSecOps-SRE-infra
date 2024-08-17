@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opensearch-security-key
+  namespace: opensearch
+  labels:
+    component: opensearch
+data:
+  willbridcom-key.pem: |
+    -----BEGIN RSA PRIVATE KEY-----
+    MIIEpAIBAAKCAQEAxFkr00uX1jU4nCKEQKJVsGEV4uvKStvlJI9WW2/89va4k2o2
+    V96d8pfzrFhpZPcjGLK2mCF/VbDDSGBdE56Tsv6bkSBsJkkAUMveBwUrWxyL4lWp
+    78wBcAkSz0cOCjfnWawquVGEPpFf6Ymlk7jMM0ovfqpEL3ZxeZa5FTL7g7c+LdM7
+    tONi040XQKg+7VNe2qrc+iBI90PCvfBFUNpeJftEdj1856fPzWjkWfZNt/qFGbvn
+    SxYo5fk8zg898Wc+QAN5ewgcG/OHSNwoG6gw98R1RrWVxZiWeLuhzhwXw9L9cCU6
+    FJl1YBg036AyWRqR2ALoTvkdh2vXWuzjerT9VQIDAQABAoIBABJmwQK2bO54YmvP
+    mFFuZVV4Y9K2gmjtntYEUPWU00JZ8QZvx9QIWwknUIDwcEA0ISfpZ89uJD7lqAea
+    cF6sV+9IiU/amAgmg08PLCnAREXvsPRvTtPYbLIRR6ABasFuZ9IxnndrulcazMBY
+    VBo6EXklFLpsPqOsGAprI8Fm28eGNNjbY9pb7QH47rsHuljdmPVKDuHKVMyJDgxf
+    O6j7AlSAszEf5j0fBzNH5WLXePpRnFH7fasqJnGX6ExMq94qTJH/Vx1XWCY6sUOV
+    EmDb/c2iuPWhU7xNdRGazJR+J87aHjvODAZWPfSv0P1W/y1b1aUwlXW5PIouwAkq
+    EGjCcakCgYEA4sWDzPTmVSvSrBhLUzfWSixj9L4wXxQofLFPkXRMmiLpjqXGRprC
+    i7BI5TH34b5k59stIpKU0kXnEnH5ObHvBtt3jtEVvL2gTkJYDUN0+d5juF+6112C
+    H/lLpsWd1VyAfAIeB+Rb7SAJSjfShDdHYGVFN3KcxCoa1eBxfUYNsZ8CgYEA3afS
+    MhLw/hIumAHU0az89oz5SpsVkWfSjxjUDSG3Ds6CV8qAaIYx3GaFFcytpyto0rIF
+    Ek1Pq/9BBMFpdBUy6cWU9OOHm+frCxUXEi2Lt2gMWjBTId7+UIZHSwFgfLbElLB0
+    Z8Xx1CckmpTMPdSso4anksE9U/hlgNtXvR3G9IsCgYBf2QPgORKxpRgiTRJpVgxo
+    xWJqK4jeZvLF4Vu0KufFrkPxWvf3F6pqyFPHK9uNup+DsAvftPzZ81m7Xhjs3dwd
+    ld1uq8j4QV3kNf5pfL2QbwLPBwc9x/Qb946WKqiPac2UnIB87XQ9QXErwXRlFchB
+    YgxjZzoDX5iAFaFiRZ28GQKBgQCskgxEkBqwtNcx4bsfw97u1bMBMt0H6B02682s
+    q6MqE/3G/BIdTt1jCy5yWniYvmNOJutr5GUzM/gbC7pedmK9PudKAhuCdn24kyLz
+    NCKjGI8FaLpQlJzLdL/s1ZWZg3JpkTgP0z0EP7Vv5IlfWkVOy3eL+ocU6T+doygc
+    RSKxIQKBgQCHW+laGIrno6/fXUFbPYFe1oJNMKA9VxOuN2tR2hLmw5AvcIQWfQ5y
+    V+GKpo+KO79JVMDiO1duGX+1uT2vsOcIo50p4E4CX44D2FbxIt1iDGL2HjS5r2qt
+    IB6OSvwdau2X2obDiOTPFRCL/WB9gyZJ9ZJsfeBN1zAGIJw+2bNvbg==
+    -----END RSA PRIVATE KEY-----

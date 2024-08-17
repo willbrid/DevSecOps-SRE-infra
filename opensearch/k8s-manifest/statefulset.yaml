@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: opensearch
+  namespace: opensearch
+  labels:
+    component: opensearch
+spec:
+  serviceName: "opensearch-headless"
+  replicas: 3
+  volumeClaimTemplates:
+  - metadata:
+      name: opensearch
+    spec:
+      storageClassName: nfs-client
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+  selector:
+    matchLabels:
+      component: opensearch
+  template:
+    metadata:
+      labels:
+        component: opensearch
+    spec:
+      securityContext:
+        runAsGroup: 1000840000
+        fsGroup: 1000840000
+      containers:
+      - name: opensearch
+        image: 'opensearchproject/opensearch:2.16.0'
+        ports:
+        - name: http-api 
+          containerPort: 9200
+          protocol: TCP
+        - name: http-search
+          containerPort: 9250
+          protocol: TCP
+        - name: http-com
+          containerPort: 9300
+          protocol: TCP
+        - name: http-perf
+          containerPort: 9600
+          protocol: TCP
+        securityContext:
+          allowPrivilegeEscalation: false
+        env:
+        - name: cluster.name
+          value: 'opensearch-cluster'
+        - name: node.name
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: node.roles
+          value: "master,ingest,data,remote_cluster_client,"
+        - name: network.host
+          value: "0.0.0.0"
+        - name: discovery.seed_hosts
+          value: "opensearch-headless"
+        - name: cluster.initial_master_nodes
+          value: "opensearch-0,opensearch-1,opensearch-2"
+        - name: bootstrap.memory_lock
+          value: "false"
+        - name: OPENSEARCH_JAVA_OPTS
+          value: '-Xms1024m -Xmx1024m'
+        - name: DISABLE_INSTALL_DEMO_CONFIG
+          value: "true"
+        - name: DISABLE_SECURITY_PLUGIN
+          value: "false"
+        envFrom:
+        - secretRef:
+            name: opensearch
+        resources:
+          limits:
+            cpu: '500m'
+            memory: 2Gi
+          requests:
+            cpu: '100m'
+            memory: 500Mi
+        volumeMounts:
+        - name: opensearch
+          mountPath: /usr/share/opensearch/data
+        - name: opensearch-security-cert
+          mountPath: /usr/share/opensearch/config/willbridcom.pem
+          subPath: willbridcom.pem
+        - name: opensearch-security-key
+          mountPath: /usr/share/opensearch/config/willbridcom-key.pem
+          subPath: willbridcom-key.pem
+        - name: opensearch-security-ca
+          mountPath: /usr/share/opensearch/config/willbridcom-ca.pem
+          subPath: willbridcom-ca.pem
+        - name: opensearch-security-config
+          mountPath: /usr/share/opensearch/config/opensearch.yml
+          subPath: opensearch.yml
+        imagePullPolicy: IfNotPresent
+      volumes:
+      - name: opensearch-security-config
+        configMap:
+          name: opensearch-security-config
+      - name: opensearch-security-cert
+        configMap:
+          name: opensearch-security-cert
+      - name: opensearch-security-key
+        configMap:
+          name: opensearch-security-key
+      - name: opensearch-security-ca
+        configMap:
+          name: opensearch-security-ca
