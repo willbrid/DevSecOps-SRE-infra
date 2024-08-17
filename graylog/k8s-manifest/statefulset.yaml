@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: graylog
+  namespace: graylog
+  labels:
+    component: graylog
+spec:
+  serviceName: graylog
+  replicas: 3
+  selector:
+    matchLabels:
+      component: graylog
+  template:
+    metadata:
+      labels:
+        component: graylog
+    spec:
+      containers:
+      - name: graylog
+        image: graylog/graylog:6.0.5
+        command: ["/usr/bin/tini -- wait-for-it opensearch.opensearch:9200 -- /docker-entrypoint.sh"]
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        envFrom:
+        - configMapRef:
+            name: graylog
+        - secretRef:
+            name: graylog
+        ports:
+        - name: http-port
+          containerPort: 9000
+          protocol: TCP
+        - name: syslog-tcp
+          containerPort: 1514
+          protocol: TCP
+        - name: syslog-udp
+          containerPort: 1514
+          protocol: UDP
+        - name: gelf-tcp
+          containerPort: 12201
+          protocol: TCP
+        - name: gelf-udp
+          containerPort: 12201
+          protocol: UDP
+        - name: forwarder-data
+          containerPort: 13301
+          protocol: TCP
+        - name: forwarder-config
+          containerPort: 13302
+          protocol: TCP
+        volumeMounts:
+        - name: graylog
+          mountPath: /usr/share/opensearch/data
+  volumeClaimTemplates:
+  - metadata:
+      name: graylog
+    spec:
+      storageClassName: nfs-client
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 5Gi

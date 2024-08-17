@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: graylog
+  namespace: graylog
+  labels:
+    component: graylog
+spec:
+  tls:
+  - hosts:
+    - graylog.willbrid.com
+    secretName: willbridcom
+  rules:
+  - host: graylog.willbrid.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: graylog-web
+            port:
+              number: 9000

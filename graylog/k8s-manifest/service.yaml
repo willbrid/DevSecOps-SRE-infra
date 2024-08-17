@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: graylog-web
+  namespace: graylog
+  labels:
+    component: graylog
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9000
+    targetPort: http-port
+    name: http-port
+    protocol: TCP
+  selector:
+    component: graylog

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: graylog
+  namespace: graylog
+  labels:
+    component: graylog
+data:
+  GRAYLOG_HTTP_EXTERNAL_URI: "https://graylog.willbrid.com/"
+  GRAYLOG_TRANSPORT_EMAIL_ENABLED: "true"
+  GRAYLOG_TRANSPORT_EMAIL_HOSTNAME: "webmail.willbrid.com"
+  GRAYLOG_TRANSPORT_EMAIL_PORT: "25"
+  GRAYLOG_TRANSPORT_EMAIL_USE_AUTH: "false"
+  GRAYLOG_TRANSPORT_EMAIL_USE_TLS: "false"
+  GRAYLOG_TRANSPORT_EMAIL_USE_SSL: "false"
+  GRAYLOG_TRANSPORT_EMAIL_FROM_EMAIL: "graylog@willbrid.com"
+  GRAYLOG_TRANSPORT_EMAIL_SUBJECT_PREFIX: "[graylog]"
+  GRAYLOG_MONGODB_MAX_CONNECTIONS: "1000"
+  GRAYLOG_TIMEZONE: "Africa/Douala"
+  GRAYLOG_ROOT_TIMEZONE: "Africa/Douala"
+  GRAYLOG_REPORT_DISABLE_SANDBOX: "false"
+  GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9000"
