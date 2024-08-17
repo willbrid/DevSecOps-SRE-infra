@@ -54,7 +54,7 @@ spec:
           protocol: TCP
         volumeMounts:
         - name: graylog
-          mountPath: /usr/share/opensearch/data
+          mountPath: /usr/share/graylog/data
   volumeClaimTemplates:
   - metadata:
       name: graylog
