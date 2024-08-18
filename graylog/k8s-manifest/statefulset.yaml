@@ -19,7 +19,7 @@ spec:
       containers:
       - name: graylog
         image: graylog/graylog:6.0.5
-        command: ["/usr/bin/tini -- wait-for-it opensearch.opensearch:9200 -- /docker-entrypoint.sh"]
+        command: ["/usr/bin/tini", "--", "wait-for-it", "opensearch.opensearch:9200", "--", "/docker-entrypoint.sh"]
         env:
         - name: POD_NAME
           valueFrom:
