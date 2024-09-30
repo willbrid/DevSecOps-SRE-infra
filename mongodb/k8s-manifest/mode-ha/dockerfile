@@ -1,0 +1,6 @@
+FROM mongo:7.0.6
+
+RUN mkdir /etc/mongodb-key
+COPY mongodb-keyfile /etc/mongodb-key
+RUN chown -R mongodb:mongodb /etc/mongodb-key
+RUN chmod 600 /etc/mongodb-key/mongodb-keyfile
