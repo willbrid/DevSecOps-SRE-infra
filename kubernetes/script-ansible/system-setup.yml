@@ -15,7 +15,7 @@
     zone: public
     masquerade: "true"
     permanent: yes
-    immediate: yes
+    immediate: no
     state: enabled
   notify: Reload firewalld
 
