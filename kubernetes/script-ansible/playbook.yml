@@ -23,4 +23,8 @@
   
     - name: Control plane setup
       import_tasks: control-plane-setup.yml
-      when: kubernetes_role == 'control_plane' and (not kubernetes_join_control_plane)
+      when: kubernetes_role == 'primary_control_plane' or kubernetes_role == 'secondary_control_plane'
+
+    - name: Node setup
+      import_tasks: node-setup.yml
+      when: kubernetes_role == 'node'
