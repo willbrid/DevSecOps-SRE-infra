@@ -1,0 +1,19 @@
+---
+- hosts: "{{ kubernetes_role }}"
+  become: yes
+
+  vars_files:
+  - vars.yml
+
+  handlers:
+  - import_tasks: handlers.yml
+
+  tasks:
+  - name: System setup
+    import_tasks: system-setup.yml
+
+  - name: Cri-o setup
+    import_tasks: crio-setup.yml
+
+  - name: Kubernetes packages setup
+    import_tasks: k8s-packages-setup.yml
