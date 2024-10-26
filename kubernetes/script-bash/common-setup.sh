@@ -137,7 +137,7 @@ EOF
     dnf -q install -y kubelet-$k8s_version kubeadm-$k8s_version kubectl-$k8s_version --disableexcludes=kubernetes
     systemctl enable --now kubelet
 
-    echo -e "\nInstallation de kubernetes : OK\n"
+    echo -e "\nInstallation des packages de kubernetes : OK\n"
 }
 
 # fail_trap est exécuté si une erreur se produit.
