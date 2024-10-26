@@ -1,9 +1,9 @@
 ---
 kubernetes_version: '1.28'
 kubernetes_specific_version: '1.28.0'
-kubernetes_role: control_plane # 2 possible values : control_plane - node
-kubernetes_join_control_plane: false # Use to add a new control plane
-kubernetes_control_plane_ip: "192.168.56.200"
+kubernetes_role: primary_control_plane # 3 possibles values : primary_control_plane - secondary_control_plane - node
+kubernetes_control_plane_ip: "192.168.56.230"
+kubernetes_control_plane_endpoint: "192.168.56.230"
 kubernetes_cni_network:
   cni: 'calico' # 3 possibles values : calico, flannel, weave 
   cidr: '172.16.0.0/16'
