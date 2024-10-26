@@ -4,10 +4,10 @@ Kubernetes est une plateforme open source de gestion d'orchestration de conteneu
 
 ### Bac à sable
 
-Nous mettons en place notre sandbox d'installation de kubernetes via l'utilitaire **vagrant** depuis une machine hôte **ubuntu 20.04**, qui nous permettra d'installer :
-- 3 machines virtuelles virtualbox **Rocky linux 8.9** pour notre cluster kubernetes : 1 noeud master et 2 noeuds worker
-- 1 machine virtuelle virtualbox **Rocky linux 8.9** pour le service de stockage NFS
-- 1 machine virtuelle virtualbox **Rocky linux 8.9** pour le service haproxy (load balanceur) et dns
+Nous mettons en place notre sandbox d'installation de kubernetes via l'utilitaire **vagrant** depuis une machine hôte **ubuntu 22.04**, qui nous permettra d'installer :
+- 3 machines virtuelles virtualbox **Rocky linux 8.10** pour notre cluster kubernetes : 1 noeud master et 2 noeuds worker
+- 1 machine virtuelle virtualbox **Rocky linux 8.10** pour le service de stockage NFS
+- 1 machine virtuelle virtualbox **Rocky linux 8.10** pour le service haproxy (load balanceur) et dns
 
 <p align="center">
 <img src="./images/arch-k8s.png" alt="arch-k8s.png" width="500" height="520" />
@@ -15,7 +15,7 @@ Nous mettons en place notre sandbox d'installation de kubernetes via l'utilitair
 
 ```
 mkdir ~/kubernetes && cd ~/kubernetes
-wget https://download.virtualbox.org/virtualbox/7.0.12/VBoxGuestAdditions_7.0.12.iso
+wget https://download.virtualbox.org/virtualbox/7.0.20/VBoxGuestAdditions_7.0.20.iso
 ```
 
 ```
@@ -31,11 +31,11 @@ VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vbguest.auto_update = false
   config.vbguest.no_remote = true
-  config.vbguest.iso_path = "./VBoxGuestAdditions_7.0.12.iso"
+  config.vbguest.iso_path = "./VBoxGuestAdditions_7.0.20.iso"
 
   # General Vagrant VM configuration.
   config.vm.box = "willbrid/rockylinux8"
-  config.vm.box_version = "0.0.2"
+  config.vm.box_version = "0.0.3"
   config.ssh.insert_key = false
   config.vm.synced_folder ".", "/vagrant", disabled: true
   config.vm.provider :virtualbox do |v|
@@ -63,6 +63,18 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     srv.vm.network :private_network, ip: "192.168.56.200"
   end
 
+  # Master 2
+  config.vm.define "control-node-2" do |srv|
+    srv.vm.hostname = "control-2"
+    srv.vm.network :private_network, ip: "192.168.56.206"
+  end
+
+  # Master 3
+  config.vm.define "control-node-3" do |srv|
+    srv.vm.hostname = "control-3"
+    srv.vm.network :private_network, ip: "192.168.56.207"
+  end
+
   # Worker1
   config.vm.define "worker-node1" do |srv|
     srv.vm.hostname = "worker1"
@@ -75,10 +87,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     srv.vm.network :private_network, ip: "192.168.56.202"
   end
 
+  # Worker3
+  config.vm.define "worker-node3" do |srv|
+    srv.vm.hostname = "worker3"
+    srv.vm.network :private_network, ip: "192.168.56.203"
+  end
+
   # NFS-Storage
   config.vm.define "nfs-storage" do |srv|
     srv.vm.hostname = "nfs-storage"
-    srv.vm.network :private_network, ip: "192.168.56.203"
+    srv.vm.network :private_network, ip: "192.168.56.204"
     srv.vm.disk :disk, name: "storage", size: "100GB"
     srv.vm.provider :virtualbox do |v|
         v.memory = 2048
@@ -88,7 +106,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # LB-SRV
   config.vm.define "lb-srv" do |srv|
     srv.vm.hostname = "lb-srv"
-    srv.vm.network :private_network, ip: "192.168.56.204"
+    srv.vm.network :private_network, ip: "192.168.56.205"
     srv.vm.provider :virtualbox do |v|
         v.memory = 2048
         v.cpus = 1
@@ -203,7 +221,7 @@ helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/
 ```
 helm install nfs-subdir-external-provisioner \
 nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
---set nfs.server=192.168.56.203 \
+--set nfs.server=192.168.56.204 \
 --set nfs.path=/data/nfsshared \
 --set storageClass.onDelete=true
 ```
@@ -222,7 +240,7 @@ git clone https://github.com/techiescamp/nginx-ingress-controller
 cd nginx-ingress-controller/manifests
 ```
 
-- Configuration du déploiement à 2 instances afin qu'elles soient déployées chacune sur chaque noeud worker
+- Configuration du déploiement à 3 instances afin qu'elles soient déployées chacune sur chaque noeud worker
 
 ```
 vi deployment.yaml
@@ -231,7 +249,7 @@ vi deployment.yaml
 ```
 ...
 spec:
-  replicas: 2
+  replicas: 3
 ...
 ```
 
@@ -255,7 +273,7 @@ metadata:
   namespace: ingress-nginx
 spec:
   externalIPs:
-  - 192.168.56.204
+  - 192.168.56.205
 ...
 ```
 
@@ -319,6 +337,7 @@ backend http-server
   balance roundrobin
   server http-server-worker1 192.168.56.201:30897 check
   server http-server-worker2 192.168.56.202:30897 check
+  server http-server-worker3 192.168.56.203:30897 check
 
 # Frontend pour https dans tcp
 frontend https-in-tcp
@@ -331,6 +350,7 @@ backend https-server
   balance roundrobin
   server https-server-worker1 192.168.56.201:32374 check
   server https-server-worker2 192.168.56.202:32374 check
+  server https-server-worker3 192.168.56.203:30897 check
 ```
 
 Les ports **30897** et **32374** sont respectivement les ports du service **ingress-nginx-controller** de type **LoadBalancer** qui correspondent respectivement au port **80** et **443** de **nginx** du deploiement **ingress-nginx-controller**.
