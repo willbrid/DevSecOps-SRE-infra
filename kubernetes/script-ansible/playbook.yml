@@ -1,19 +1,26 @@
 ---
-- hosts: "{{ kubernetes_role }}"
-  become: yes
-
-  vars_files:
-  - vars.yml
-
-  handlers:
-  - import_tasks: handlers.yml
-
-  tasks:
-  - name: System setup
-    import_tasks: system-setup.yml
-
-  - name: Cri-o setup
-    import_tasks: crio-setup.yml
-
-  - name: Kubernetes packages setup
-    import_tasks: k8s-packages-setup.yml
+  - hosts: "{{ kubernetes_role }}"
+    become: yes
+  
+    vars_files:
+    - vars.yml
+  
+    handlers:
+    - import_tasks: handlers.yml
+  
+    tasks:
+    - name: System setup
+      import_tasks: system-setup.yml
+  
+    - name: Cri-o setup
+      import_tasks: crio-setup.yml
+  
+    - name: Kubernetes packages setup
+      import_tasks: k8s-packages-setup.yml
+  
+    - name: Flush handlers
+      meta: flush_handlers
+  
+    - name: Control plane setup
+      import_tasks: control-plane-setup.yml
+      when: kubernetes_role == 'control_plane' and (not kubernetes_join_control_plane)
