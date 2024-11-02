@@ -16,3 +16,5 @@
     - name: Setup CERT
       import_tasks: cert-setup.yml
       run_once: true
+
+# Reference : https://docs.ansible.com/ansible/latest/collections/community/crypto/docsite/guide_ownca.html      
