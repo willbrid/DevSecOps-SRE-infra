@@ -1,0 +1,32 @@
+---
+- name: Create private key for new certificate
+  community.crypto.openssl_privatekey:
+    path: "{{ output_path }}/{{ cert_file_name }}.key"
+
+- name: Create certificate signing request for new certificate
+  community.crypto.openssl_csr_pipe:
+    privatekey_path: "{{ output_path }}/{{ cert_file_name }}.key"
+    country_name: "{{ cert_country_name }}"
+    organization_name: "{{ cert_organization_name }}"
+    email_address: "{{ cert_email_address }}"
+    common_name: "{{ cert_common_name }}"
+    subject_alt_name: "{{ item.value | map('regex_replace', '^', 'DNS:') | list }}"
+  with_dict:
+    dns_server: "{{ cert_alt_names }}"
+  register: cert_csr
+
+- name: Sign certificate with our CA
+  community.crypto.x509_certificate_pipe:
+    csr_content: "{{ cert_csr.results[0].csr }}"
+    provider: "ownca"
+    ownca_path: "{{ output_path }}/ca.pem"
+    ownca_privatekey_path: "{{ output_path }}/ca.key"
+    ownca_privatekey_passphrase: "{{ ca_secret_passphrase }}"
+    ownca_not_after: "{{ cert_valid_for }}"
+    ownca_not_before: "{{ cert_valid_since }}"
+  register: cert
+
+- name: Write certificate file
+  copy:
+    dest: "{{ output_path }}/{{ cert_file_name }}.crt"
+    content: "{{ cert.certificate }}"

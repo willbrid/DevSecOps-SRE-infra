@@ -1,0 +1,18 @@
+---
+  - hosts: "{{ hostname }}"
+
+    vars_files:
+    - vars.yml
+
+    tasks:
+    - name: Dependencies installation
+      import_tasks: dependencies-setup.yml
+      become: yes
+
+    - name: Setup CA
+      import_tasks: ca-setup.yml
+      run_once: true
+
+    - name: Setup CERT
+      import_tasks: cert-setup.yml
+      run_once: true

@@ -1,0 +1,17 @@
+---
+hostname: "db"
+output_path: "/home/vagrant"
+
+ca_common_name: "*.willbrid.com"
+ca_secret_passphrase: "test@test"
+
+cert_file_name: "willbrid.com"
+cert_common_name: "*.willbrid.com"
+cert_organization_name: "willbrid"
+cert_email_address: "admin@willbrid.com"
+cert_country_name: "CM"
+cert_valid_for: "+365d"
+cert_valid_since: "-1d"
+cert_alt_names:
+- "willbrid.com"
+- "*.willbrid.com"

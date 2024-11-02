@@ -1,0 +1,17 @@
+---
+- name: Install python3, python3-setuptools and python3-pip packages
+  dnf:
+    name:
+    - python3
+    - python3-pip
+    - python3-setuptools
+    state: present
+
+- name: Upgrade pip
+  command: "pip3 install -U pip"
+
+- name: Install pyopenssl and cryptography python packages
+  pip:
+    name:
+    - pyopenssl
+    - cryptography
