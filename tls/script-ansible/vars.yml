@@ -1,6 +1,6 @@
 ---
-hostname: "db"
-output_path: "/home/vagrant"
+hostname: "localhost"
+output_path: "/home/vagrant" # Mettre à jour cette variable pour le repertoire de génération des fichiers de certificats
 
 ca_common_name: "*.willbrid.com"
 ca_secret_passphrase: "test@test"
