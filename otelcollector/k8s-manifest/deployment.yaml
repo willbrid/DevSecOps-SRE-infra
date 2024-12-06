@@ -27,12 +27,6 @@ spec:
           - name: otlp-http
             containerPort: 4318
             protocol: TCP
-          - name: metric-http
-            containerPort: 8889
-            protocol: TCP
-          - name: prom-http
-            containerPort: 8888
-            protocol: TCP
           - name: health-http
             containerPort: 13133
             protocol: TCP
