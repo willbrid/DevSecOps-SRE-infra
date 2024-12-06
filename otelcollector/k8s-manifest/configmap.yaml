@@ -21,10 +21,9 @@ data:
         spike_limit_mib: 512
         check_interval: 5s
     extensions:
-      health_check: {}
+      health_check:
+        endpoint: ${env:MY_POD_IP}:13133
     exporters:
-      prometheus:
-        endpoint: "0.0.0.0:8889"
       prometheusremotewrite:
         endpoint: "http://@promIP:9090/api/v1/write"
         tls:
@@ -35,4 +34,4 @@ data:
         metrics:
           receivers: [otlp]
           processors: [memory_limiter, batch]
-          exporters: [prometheus,prometheusremotewrite]
+          exporters: [prometheusremotewrite]
