@@ -42,6 +42,14 @@ spec:
               name: minio-storage
           - secretRef:
               name: minio-storage
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: 9000
+          readinessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: 9000
           resources:
             limits:
               cpu: '500m'
