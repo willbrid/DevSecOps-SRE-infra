@@ -1,0 +1,12 @@
+---
+kind: ConfigMap
+metadata:
+  name: loki-runtime
+  namespace: loki
+  labels:
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/instance: loki
+    app.kubernetes.io/version: "3.3.2"
+data:
+  runtime-config.yaml: |
+    {}
