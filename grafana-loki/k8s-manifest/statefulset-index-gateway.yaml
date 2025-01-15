@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: loki-index-gateway
+  namespace: loki
+  labels:
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/instance: loki
+    app.kubernetes.io/version: "3.3.2"
+    app.kubernetes.io/component: index-gateway
+spec:
+  replicas: 2
+  updateStrategy:
+    type: RollingUpdate
+  serviceName: loki-index-gateway-headless
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: loki
+      app.kubernetes.io/instance: loki
+      app.kubernetes.io/component: index-gateway
+  template:
+    metadata:
+      annotations:
+        checksum/config: 537648ebc25922ab280bf61f4cba700cd9407071bec8f6cdf1bc329ea90ae28d
+      labels:
+        app.kubernetes.io/name: loki
+        app.kubernetes.io/instance: loki
+        app.kubernetes.io/component: index-gateway
+        app.kubernetes.io/part-of: memberlist
+    spec:
+      serviceAccountName: loki
+      securityContext:
+        fsGroup: 10001
+        runAsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+      terminationGracePeriodSeconds: 300
+      containers:
+        - name: index-gateway
+          image: docker.io/grafana/loki:3.3.2
+          imagePullPolicy: IfNotPresent
+          args:
+            - -config.file=/etc/loki/config/config.yaml
+            - -target=index-gateway
+          ports:
+            - name: http-metrics
+              containerPort: 3100
+              protocol: TCP
+            - name: grpc
+              containerPort: 9095
+              protocol: TCP
+            - name: http-memberlist
+              containerPort: 7946
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http-metrics
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+          livenessProbe:
+            null
+          volumeMounts:
+            - name: config
+              mountPath: /etc/loki/config
+            - name: runtime-config
+              mountPath: /etc/loki/runtime-config
+            - name: data
+              mountPath: /var/loki
+          resources:
+            {}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: index-gateway
+            topologyKey: kubernetes.io/hostname
+      volumes:
+        - name: config
+          configMap:
+            name: loki
+            items:
+              - key: "config.yaml"
+                path: "config.yaml"
+        - name: runtime-config
+          configMap:
+            name: loki-runtime
+        - name: data
+          emptyDir: {}
